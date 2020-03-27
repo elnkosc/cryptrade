@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/cryptrade.iml" filepath="$PROJECT_DIR$/.idea/cryptrade.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../cryptrade/.idea/cryptrade.iml" filepath="$PROJECT_DIR$/../cryptrade/.idea/cryptrade.iml" />
     </modules>
   </component>
 </project>

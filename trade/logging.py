@@ -40,6 +40,6 @@ class PushBulletLogger(Logger):
     def alert(self, level, alert_title, alert_msg):
         super().alert(level, alert_title, alert_msg)
         try:
-            self._pb.push_note("CBPro Alert", alert_title)
+            self._pb.push_note("cryptrade Alert", alert_title)
         except:
             self.log(level, "PushBullet notification failed!")
