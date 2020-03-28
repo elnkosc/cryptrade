@@ -1,5 +1,6 @@
 from trade import logging
 
+
 class TradeClient:
     def __init__(self):
         self._client = None
@@ -13,11 +14,10 @@ class TradeClient:
 
 
 class Product:
-    def __init__(self, auth_client, trading_currency, buying_currency, basic_amount):
+    def __init__(self, auth_client, trading_currency, buying_currency):
         self._auth_client = auth_client
         self._trading_currency = trading_currency
         self._buying_currency = buying_currency
-        self._basic_amount = basic_amount
         self._prod_id = ""
         self._min_order_value = 0.0
         self._min_amount = 0.0
@@ -51,18 +51,15 @@ class Product:
         return self._min_price
 
     def valid(self, amount, price):
-        if amount < self._min_amount or price < self._min_price or amount * price < self._min_order_value:
-            return False
-        else:
-            return True
+        return amount >= self._min_amount and price >= self._min_price and amount * price >= self._min_order_value
 
-    def price(self, price):
+    def format_price(self, price):
         if self._min_price > 0:
             return round(price, len(str(self._min_price))-2)
         else:
             return price
 
-    def amount(self, amount):
+    def format_amount(self, amount):
         if self._min_amount > 0:
             return round(amount, len(str(self._min_amount))-2)
         else:
@@ -112,9 +109,9 @@ class Order:
         self._auth_client = auth_client
         self._product = product
         self._order_type = order_type
-        self._price = self._product.price(price)
-        self._amount = self._product.amount(amount)
-        self._order_id = ""
+        self._price = self._product.format_price(price)
+        self._amount = self._product.format_amount(amount)
+        self._order_id = None
         self._status = "open"
         self._filled_size = 0.0
         self._executed_value = 0.0
@@ -145,8 +142,8 @@ class Order:
         return self._message
 
     def cancel(self):
-        self._status = "cancelled"
-        self._message = "order cancelled by user"
+        self._status = "canceled"
+        self._message = "order canceled by user"
         self._settled = True
 
     def __str__(self):
@@ -224,10 +221,10 @@ class Accumulator:
 
 
 class ApiCreator:
-    def create_trade_client(self, api_key, api_secret, api_pass):
+    def create_trade_client(self, credentials):
         pass
 
-    def create_product(self, auth_client, trading_currency, buying_currency, basic_amount):
+    def create_product(self, auth_client, trading_currency, buying_currency):
         pass
 
     def create_ticker(self, auth_client, product):

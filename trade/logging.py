@@ -22,14 +22,14 @@ class Logger:
 class FileLogger(Logger):
     def __init__(self, level, fname):
         super().__init__(level)
-        self._fp = fopen(fname,"w+")
+        self._fp = open(fname, "w+")
 
     def log(self, level, debug_info):
         if level <= self._level:
             self._fp.write(f"{debug_info}\n")
 
     def __del__(self):
-        fclose(self._fp)
+        self._fp.close()
 
 
 class PushBulletLogger(Logger):

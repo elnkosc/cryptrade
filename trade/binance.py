@@ -7,19 +7,31 @@ TRANSACTION_FEE = 0.001  # transaction fee (percentage)
 
 
 class BinTradeClient(TradeClient):
-    def __init__(self, api_key, api_secret):
+    def __init__(self, credentials):
         super().__init__()
-        self._client = BinClient(api_key, api_secret)
+
+        if "binance" in credentials and \
+                "api_key" in credentials["binance"] and \
+                "api_secret" in credentials["binance"]:
+            api_key = credentials["coinbase"]["api_key"]
+            api_secret = credentials["coinbase"]["api_secret"]
+        else:
+            raise AttributeError("missing or invalid credentials for binance")
+
+        try:
+            self._client = BinClient(api_key, api_secret)
+        except Exception:
+            raise
 
     def cancel_all(self, product):
-        # not available on binance
+        # not available on binance API
         pass
 
 
 class BinProduct(Product):
-    def __init__(self, auth_client, trading_currency, buying_currency, basic_amount):
+    def __init__(self, auth_client, trading_currency, buying_currency):
         try:
-            super().__init__(auth_client, trading_currency, buying_currency, basic_amount)
+            super().__init__(auth_client, trading_currency, buying_currency)
             self._prod_id = self._trading_currency + self._buying_currency
 
             symbol_info = self._auth_client.client.get_symbol_info(self._prod_id)
@@ -30,10 +42,6 @@ class BinProduct(Product):
                     self._min_price = float(f["minPrice"])
                 elif f["filterType"] == "LOT_SIZE":
                     self._min_amount = float(f["minQty"])
-
-            if self._basic_amount < self._min_amount:
-                raise AttributeError(f"Smallest value for {self._trading_currency} "
-                                     f"trading amount on Binance is {self._min_amount}")
 
         except Exception:
             raise
@@ -56,21 +64,21 @@ class BinOrder(Order):
         try:
             super().__init__(auth_client, product, order_type, price, amount)
 
-            if self._product.valid(self._amount, self._price):
-                if self._order_type == "buy":
-                    result = self._auth_client.client.order_limit_buy(
-                        symbol=self._product.prod_id,
-                        quantity=self._amount,
-                        price=str(self._price))
-                elif self._order_type == "sell":
-                    result = self._auth_client.client.order_limit_sell(
-                        symbol=self._product.prod_id,
-                        quantity=self._amount,
-                        price=str(self._price))
-                else:
-                    raise AttributeError(f"Invalid order-type: {self._order_type}")
+            if not self._product.valid(self._amount, self._price):
+                raise AttributeError("Invalid amount/price for order")
+
+            if self._order_type == "buy":
+                result = self._auth_client.client.order_limit_buy(
+                    symbol=self._product.prod_id,
+                    quantity=self._amount,
+                    price=str(self._price))
+            elif self._order_type == "sell":
+                result = self._auth_client.client.order_limit_sell(
+                    symbol=self._product.prod_id,
+                    quantity=self._amount,
+                    price=str(self._price))
             else:
-                result = {}
+                raise AttributeError(f"Invalid order-type: {self._order_type}")
 
             if "orderId" in result:
                 self._order_id = result["orderId"]
@@ -80,12 +88,7 @@ class BinOrder(Order):
                 self._settled = False
                 self._message = "order creation successful"
             else:
-                self._order_id = ""
-                self._status = "error"
-                self._filled_size = 0.0
-                self._executed_value = 0.0
-                self._settled = True
-                self._message = "order creation failed: unknown error"
+                raise AttributeError("unknown error")
 
         except Exception:
             self._order_id = ""
@@ -93,7 +96,7 @@ class BinOrder(Order):
             self._filled_size = 0.0
             self._executed_value = 0.0
             self._settled = True
-            self._message = f"limit order exception: {sys.exc_info()[0]}"
+            self._message = f"Invalid order: {sys.exc_info()[1]}"
 
     def status(self):
         try:
@@ -106,13 +109,11 @@ class BinOrder(Order):
                 if self._status in ["CANCELED", "FILLED", "EXPIRED", "REJECTED"]:
                     self._settled = True
             else:
-                self._status = "error"
-                self._message = order_update["message"]
-                self._settled = True
+                raise AttributeError("unknown error")
 
         except Exception:
             self._status = "error"
-            self._message = f"order update exception: {sys.exc_info()[0]}"
+            self._message = f"order update exception: {sys.exc_info()[1]}"
             self._settled = True
 
         return self._settled
@@ -149,11 +150,11 @@ class BinAccumulator(Accumulator):
 
 
 class BinApiCreator(ApiCreator):
-    def create_trade_client(self, api_key, api_secret, api_pass=None):
-        return BinTradeClient(api_key, api_secret)
+    def create_trade_client(self, credentials):
+        return BinTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency, basic_amount):
-        return BinProduct(auth_client, trading_currency, buying_currency, basic_amount)
+    def create_product(self, auth_client, trading_currency, buying_currency):
+        return BinProduct(auth_client, trading_currency, buying_currency)
 
     def create_ticker(self, auth_client, product):
         return BinTicker(auth_client, product)

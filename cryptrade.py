@@ -5,22 +5,14 @@ from trade import logging
 from trade.parameters import CommandLine
 import sys
 import time
+import json
 
 # Define general preferences
 WAIT_TIME = 5             # refresh time (in seconds) for trade update check
 SINGLE_ORDER_WAIT = 3600  # max time before cancelling a single order (when empty orders are allowed)
 
-# Define user credentials for Coinbase Pro Default account
-CB_API_KEY = "f838c0a61cff1238686a55ffa3034cf1"
-CB_API_SECRET = "/RisYHuXlEbiWVr4Ifsj+Al5aXCLOiL7pOJZGlnuQdVvCErrKxBU0ksulFiEww1hdOe5xV9Am8WSiBBSXbWRdQ=="
-CB_API_PASS = "41dyi6ndhxs"
-
-# Define user credentials for Binance account
-BIN_API_KEY = "M9yDcO7zYm0RblzssDipFj3HnFUGsCWyV9YQ983onBo1MwYen4Ggnq8wULx44JZI"
-BIN_API_SECRET = "H1BntqKYOBlkxb1r63PDvCtj9H8J4rIA5nibvRCzRZji3ZCeXUICCEaSVOYzyqhV"
-
-# API key for alerts via pushbullet service
-PUSH_BULLET_API_KEY = "o.DO1wLeDTw4k2WcO20MKCQLsYVjTpwt63"
+# store all your API credentials in cryptrade.json file!
+credentials = json.load(open("cryptrade.json", "r"))
 
 # create global object instances
 parameters = CommandLine()
@@ -29,21 +21,14 @@ logger = logging.Logger(parameters.logging_level)
 # create abstract factory for API instantiation
 if parameters.exchange == "coinbase":
     api_factory = coinbase.CBApiCreator()
-    api_key = CB_API_KEY
-    api_secret = CB_API_SECRET
-    api_pass = CB_API_PASS
 elif parameters.exchange == "binance":
     api_factory = binance.BinApiCreator()
-    api_key = BIN_API_KEY
-    api_secret = BIN_API_SECRET
-    api_pass = None
 else:
     raise AttributeError("Invalid argument: exchange unknown")
 
 # create the concrete API interfaces
-trade_client = api_factory.create_trade_client(api_key, api_secret, api_pass)
-trade_product = api_factory.create_product(trade_client, parameters.trading_currency, parameters.buying_currency,
-                                           parameters.basic_amount)
+trade_client = api_factory.create_trade_client(credentials)
+trade_product = api_factory.create_product(trade_client, parameters.trading_currency, parameters.buying_currency)
 ticker = api_factory.create_ticker(trade_client, trade_product)
 account = api_factory.create_account(trade_client, trade_product)
 buying = api_factory.create_accumulator("buy")
