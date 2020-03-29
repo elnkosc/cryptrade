@@ -1,6 +1,6 @@
 {
   "coinbase" : {
-      "api_key" : "",
+      "api_key" : "your api key",
       "api_secret" : "",
       "api_pass" : "" },
   "binance" : {
