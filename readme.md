@@ -14,7 +14,28 @@ At this moment, the following crypto exchanges are supported:
 
 The classes for these exchanges are offered through an abstract factory so you can transparently switch in your client program between the different exchanges (or use them in parallel).
 
-cryptrade.py is a sample program that is added to show the usage of this package. It's operation can be directed using commandline parameters. Use "python cryptrade.py -h" for an overview of its usage.
+cryptrade.py is a sample program that is added to show the usage of this package. It's operation can be directed using commandline parameters.
+~~~~
+usage: cryptrade.py [-h] [-c {eur,btc}] [-d TRADE_DELTA] [-a TRADE_AMOUNT]
+                    exchange currency
+
+positional arguments:
+  exchange              Exchange to trade on. Currently supported: Coinbase
+                        Pro, Binance
+  currency              Currency to trade in (btc, eth, xrp, ltc, bch).
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c {eur,btc}, --currency {eur,btc}
+                        (Crypto) currency to use for buying.
+  -d TRADE_DELTA, --delta TRADE_DELTA
+                        Percentage (0.0 < trade < 100.0) by which market price
+                        should change before making a trade (accepts
+                        fractional numbers).
+  -a TRADE_AMOUNT, --amount TRADE_AMOUNT
+                        Initial amount to start trading with (btc>=0.001,
+                        eth>=0.01, xrp>=1, ltc=0.1).
+~~~~
 
 Make sure you provide your credentials (API key & secret) before using it. They should be stored in a json file like:
 ~~~~
