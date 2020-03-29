@@ -115,7 +115,7 @@ try:
         sell_order.cancel()
         buy_order.cancel()
 
-        # account.update(ticker.price)
+        account.update(ticker.price)
         logger.log(logging.DETAILED, f"{account}\n{buying}\n{selling}\n")
 
     logger.alert(logging.BASIC, "TRADING ABORTED!",
