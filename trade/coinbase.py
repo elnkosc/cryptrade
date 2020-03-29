@@ -12,7 +12,7 @@ class CBTradeClient(TradeClient):
 
         if "coinbase" in credentials and \
                 "api_key" in credentials["coinbase"] and \
-                "api_secret" in credentials["coincase"] and \
+                "api_secret" in credentials["coinbase"] and \
                 "api_pass" in credentials["coinbase"]:
             api_key = credentials["coinbase"]["api_key"]
             api_secret = credentials["coinbase"]["api_secret"]

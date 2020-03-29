@@ -13,8 +13,8 @@ class BinTradeClient(TradeClient):
         if "binance" in credentials and \
                 "api_key" in credentials["binance"] and \
                 "api_secret" in credentials["binance"]:
-            api_key = credentials["coinbase"]["api_key"]
-            api_secret = credentials["coinbase"]["api_secret"]
+            api_key = credentials["binance"]["api_key"]
+            api_secret = credentials["binance"]["api_secret"]
         else:
             raise AttributeError("missing or invalid credentials for binance")
 
