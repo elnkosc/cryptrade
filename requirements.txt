@@ -1,7 +1,7 @@
-binance
 attrs==19.3.0
 autobahn==20.3.1
 Automat==20.2.0
+binance==0.3
 cbpro==1.1.4
 certifi==2019.11.28
 cffi==1.14.0
