@@ -1,0 +1,11 @@
+{
+  "coinbase" : {
+      "api_key" : "f838c0a61cff1238686a55ffa3034cf1",
+      "api_secret" : "/RisYHuXlEbiWVr4Ifsj+Al5aXCLOiL7pOJZGlnuQdVvCErrKxBU0ksulFiEww1hdOe5xV9Am8WSiBBSXbWRdQ==",
+      "api_pass" : "41dyi6ndhxs" },
+  "binance" : {
+      "api_key" : "M9yDcO7zYm0RblzssDipFj3HnFUGsCWyV9YQ983onBo1MwYen4Ggnq8wULx44JZI",
+      "api_secret" : "H1BntqKYOBlkxb1r63PDvCtj9H8J4rIA5nibvRCzRZji3ZCeXUICCEaSVOYzyqhV" },
+  "pushbullet" : {
+      "api_key" : "o.DO1wLeDTw4k2WcO20MKCQLsYVjTpwt63" }
+}
