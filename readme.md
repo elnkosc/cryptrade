@@ -9,7 +9,7 @@ These (abstract) interfaces provide the basic validations needed to successfully
 Besides trading objects, there are also (abstract) classes for getting/setting global trade parameters (e.g. using the commandline) and logging information for debug purposes (stdout, to file, PushBullet)
 
 At this moment, the following crypto exchanges are supported:
-* Coinbase Pro (http://pro.coinbase.com), formerly known ad GDAX
+* Coinbase Pro (http://pro.coinbase.com), formerly known as GDAX
 * Binance (http://binance.com)
 
 The classes for these exchanges are offered through an abstract factory so you can transparently switch in your client program between the different exchanges (or use them in parallel).
