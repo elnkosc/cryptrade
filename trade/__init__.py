@@ -111,6 +111,7 @@ class Order:
         self._order_type = order_type
         self._price = self._product.format_price(price)
         self._amount = self._product.format_amount(amount)
+        self._created = False
         self._order_id = None
         self._status = "open"
         self._filled_size = 0.0
@@ -136,6 +137,10 @@ class Order:
     @property
     def error(self):
         return self._status == "error"
+
+    @property
+    def created(self):
+        return self._created
 
     @property
     def message(self):

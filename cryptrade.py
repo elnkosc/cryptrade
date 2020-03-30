@@ -74,9 +74,9 @@ try:
 
         # allow 1 failed order when empty orders are allowed
         single_order = False
-        if buy_order.error and sell_order.error:
+        if not buy_order.created and not sell_order.created:
             trading = False
-        elif buy_order.error or sell_order.error:
+        elif not buy_order.created or not sell_order.created:
             trading = parameters.empty_order
             single_order = True
 
@@ -89,7 +89,7 @@ try:
             if single_order and total_wait > SINGLE_ORDER_WAIT:
                 check_orders = False
 
-            if not sell_order.error:
+            if sell_order.created:
                 if sell_order.status():
                     check_orders = False
                     selling.add(sell_order.filled_size, sell_order.executed_value)
@@ -98,9 +98,9 @@ try:
                         buy_units -= 1
                         sell_units += 1
 
-                    logger.alert(logging.BASIC, "SELL-ORDER COMPLETE", f"{sell_order}")
+                    logger.alert(logging.BASIC, "SELL-ORDER FINISHED", f"{sell_order}")
 
-            if not buy_order.error:
+            if buy_order.created:
                 if buy_order.status():
                     check_orders = False
                     buying.add(buy_order.filled_size, buy_order.executed_value)
@@ -109,7 +109,7 @@ try:
                         sell_units -= 1
                         buy_units += 1
 
-                    logger.alert(logging.BASIC, "BUY-ORDER COMPLETE", f"{buy_order}")
+                    logger.alert(logging.BASIC, "BUY-ORDER FINISHED", f"{buy_order}")
 
         # cancel any (matching) order(s)
         sell_order.cancel()

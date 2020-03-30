@@ -81,6 +81,7 @@ class BinOrder(Order):
                 raise AttributeError(f"Invalid order-type: {self._order_type}")
 
             if "orderId" in result:
+                self._created = True
                 self._order_id = result["orderId"]
                 self._status = result["status"]
                 self._filled_size = float(result["executedQty"])
@@ -119,8 +120,8 @@ class BinOrder(Order):
         return self._settled
 
     def cancel(self):
-        super().cancel()
         try:
+            super().cancel()
             self._auth_client.client.cancel_order(symbol=self._product.prod_id, orderId=self._order_id)
         except Exception:
             self._message = "Cancellation failed"
