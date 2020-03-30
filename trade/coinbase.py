@@ -79,6 +79,7 @@ class CBOrder(Order):
                 time_in_force="GTC")
 
             if "id" in result:
+                self._created = True
                 self._order_id = result["id"]
                 self._status = result["status"]
                 self._filled_size = float(result["filled_size"])
@@ -119,8 +120,11 @@ class CBOrder(Order):
         return self._settled
 
     def cancel(self):
-        super().cancel()
-        self._auth_client.client.cancel_order(self.order_id)
+        try:
+            super().cancel()
+            self._auth_client.client.cancel_order(self.order_id)
+        except Exception:
+            self._message = "Cancellation failed"
 
 
 class CBAccount(Account):
