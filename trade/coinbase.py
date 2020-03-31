@@ -112,6 +112,10 @@ class CBOrder(Order):
             else:
                 raise AttributeError(order_update["message"])
 
+        except ConnectionError:
+            # ignore connection errors
+            pass
+
         except Exception:
             self._status = "error"
             self._message = f"get order exception: {sys.exc_info()[1]}"
