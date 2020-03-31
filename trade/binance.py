@@ -114,7 +114,7 @@ class BinOrder(Order):
 
         except ConnectionError:
             # ignore connection errors
-            pass
+            return self._settled
 
         except Exception:
             self._status = "error"
