@@ -9,7 +9,7 @@ import json
 
 # Define general preferences
 WAIT_TIME = 5             # refresh time (in seconds) for trade update check
-SINGLE_ORDER_WAIT = 3600  # max time before cancelling a single order (when empty orders are allowed)
+SINGLE_ORDER_WAIT = 7200  # max time before cancelling a single order (when empty orders are allowed)
 
 # store all your API credentials in cryptrade.json file!
 credentials = json.load(open("cryptrade.json", "r"))
