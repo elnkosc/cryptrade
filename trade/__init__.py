@@ -1,6 +1,3 @@
-from trade import logging
-
-
 class TradeClient:
     def __init__(self):
         self._client = None
