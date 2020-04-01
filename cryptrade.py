@@ -99,7 +99,7 @@ try:
                         sell_units += 1
 
                     logger.alert(logging.BASIC, "SELL-ORDER FINISHED", f"{sell_order}")
-                elif sell_order.error():
+                elif sell_order.error:
                     logger.log(logging.DETAILED, sell_order.message)
 
             if buy_order.created:
@@ -112,7 +112,7 @@ try:
                         buy_units += 1
 
                     logger.alert(logging.BASIC, "BUY-ORDER FINISHED", f"{buy_order}")
-                elif buy_order.error():
+                elif buy_order.error:
                     logger.log(logging.DETAILED, buy_order.message)
 
         # cancel any (matching) order(s)
