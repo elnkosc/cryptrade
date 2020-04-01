@@ -112,14 +112,9 @@ class BinOrder(Order):
             else:
                 raise AttributeError("unknown error")
 
-        except ConnectionError:
-            # ignore connection errors
-            return self._settled
-
         except Exception:
             self._status = "error"
             self._message = f"order update exception: {sys.exc_info()[1]}"
-            self._settled = True
 
         return self._settled
 
