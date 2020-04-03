@@ -110,7 +110,9 @@ class BinOrder(Order):
                 if self._status in ["CANCELED", "FILLED", "EXPIRED", "REJECTED"]:
                     self._settled = True
             else:
-                raise AttributeError("unknown error")
+                # order (most likely) not found, set settled flag
+                self._settled = True
+                raise AttributeError("order not found")
 
         except Exception:
             self._status = "error"

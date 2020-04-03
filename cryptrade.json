@@ -6,6 +6,9 @@
   "binance" : {
       "api_key" : "M9yDcO7zYm0RblzssDipFj3HnFUGsCWyV9YQ983onBo1MwYen4Ggnq8wULx44JZI",
       "api_secret" : "H1BntqKYOBlkxb1r63PDvCtj9H8J4rIA5nibvRCzRZji3ZCeXUICCEaSVOYzyqhV" },
+  "kraken" : {
+      "api_key" : "Byhg3s9Q6mND99NFt2+d/yN7ynyhHXbCKik8Ch88VCHIT5Z9Hjxp+kBi",
+      "api_secret" : "JQvSUgR5TBA+DC8jswdyMYkQQR8qYKeTL8ugUeIkmvsm0wYBHHMNVLYLtsgVmdeJ4KE95IGm/iK2NVpFSOW1iw==" },
   "pushbullet" : {
       "api_key" : "o.DO1wLeDTw4k2WcO20MKCQLsYVjTpwt63" }
 }

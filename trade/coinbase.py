@@ -110,6 +110,8 @@ class CBOrder(Order):
                 self._executed_value = float(order_update["executed_value"])
                 self._settled = bool(order_update["settled"])
             else:
+                # order not found, set settled flag
+                self._settled = True
                 raise AttributeError(order_update["message"])
 
         except Exception:

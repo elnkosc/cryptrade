@@ -68,7 +68,7 @@ class CommandLine(TradeParameters):
 
         # positional parameters
         parser.add_argument("exchange", type=str, action="store", metavar="exchange",
-                            choices=["coinbase", "binance"],
+                            choices=["coinbase", "binance", "kraken"],
                             help="Exchange to trade on. Currently supported: Coinbase Pro, Binance")
         parser.add_argument("currency", type=str, action="store", metavar="currency",
                             choices=["btc", "eth", "xrp", "ltc", "bch"],

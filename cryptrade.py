@@ -1,6 +1,7 @@
 #!/usr/bin/python3.7
 from trade import coinbase
 from trade import binance
+from trade import kraken
 from trade import logging
 from trade.parameters import CommandLine
 import sys
@@ -23,6 +24,8 @@ if parameters.exchange == "coinbase":
     api_factory = coinbase.CBApiCreator()
 elif parameters.exchange == "binance":
     api_factory = binance.BinApiCreator()
+elif parameters.exchange == "kraken":
+    api_factory = kraken.KrakenApiCreator()
 else:
     raise AttributeError("Invalid argument: exchange unknown")
 
