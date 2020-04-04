@@ -25,12 +25,6 @@ class CBTradeClient(TradeClient):
         except Exception:
             raise
 
-    def cancel_all(self, product):
-        try:
-            self._client.cancel_all(product.prod_id)
-        except Exception:
-            pass
-
 
 class CBProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):
@@ -79,6 +73,7 @@ class CBOrder(Order):
                 time_in_force="GTC")
 
             if "id" in result:
+                self._created = True
                 self._order_id = result["id"]
                 self._status = result["status"]
                 self._filled_size = float(result["filled_size"])
@@ -109,18 +104,22 @@ class CBOrder(Order):
                 self._executed_value = float(order_update["executed_value"])
                 self._settled = bool(order_update["settled"])
             else:
+                # order not found, set settled flag
+                self._settled = True
                 raise AttributeError(order_update["message"])
 
         except Exception:
             self._status = "error"
             self._message = f"get order exception: {sys.exc_info()[1]}"
-            self._settled = True
 
         return self._settled
 
     def cancel(self):
-        super().cancel()
-        self._auth_client.client.cancel_order(self.order_id)
+        try:
+            super().cancel()
+            self._auth_client.client.cancel_order(self.order_id)
+        except Exception:
+            self._message = "Cancellation failed"
 
 
 class CBAccount(Account):

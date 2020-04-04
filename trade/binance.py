@@ -23,10 +23,6 @@ class BinTradeClient(TradeClient):
         except Exception:
             raise
 
-    def cancel_all(self, product):
-        # not available on binance API
-        pass
-
 
 class BinProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):
@@ -81,6 +77,7 @@ class BinOrder(Order):
                 raise AttributeError(f"Invalid order-type: {self._order_type}")
 
             if "orderId" in result:
+                self._created = True
                 self._order_id = result["orderId"]
                 self._status = result["status"]
                 self._filled_size = float(result["executedQty"])
@@ -109,18 +106,19 @@ class BinOrder(Order):
                 if self._status in ["CANCELED", "FILLED", "EXPIRED", "REJECTED"]:
                     self._settled = True
             else:
-                raise AttributeError("unknown error")
+                # order (most likely) not found, set settled flag
+                self._settled = True
+                raise AttributeError("order not found")
 
         except Exception:
             self._status = "error"
             self._message = f"order update exception: {sys.exc_info()[1]}"
-            self._settled = True
 
         return self._settled
 
     def cancel(self):
-        super().cancel()
         try:
+            super().cancel()
             self._auth_client.client.cancel_order(symbol=self._product.prod_id, orderId=self._order_id)
         except Exception:
             self._message = "Cancellation failed"
