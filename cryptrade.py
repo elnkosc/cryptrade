@@ -4,19 +4,21 @@ from trade.parameters import CommandLine
 import time
 import json
 
-# store all your API credentials in cryptrade.json file!
-credentials = json.load(open("cryptrade.json", "r"))
+# store all your API credentials in json file!
+credentials = json.load(open(__file__.replace(".py", ".json"), "r"))
 
 # create global object instances
 parameters = CommandLine()
 
+APIs = {
+    "coinbase": coinbase.CBApiCreator(),
+    "binance": binance.BinApiCreator(),
+    "kraken": kraken.KrakenApiCreator()
+}
+
 # create abstract factory for API instantiation
-if parameters.exchange == "coinbase":
-    api_factory = coinbase.CBApiCreator()
-elif parameters.exchange == "binance":
-    api_factory = binance.BinApiCreator()
-elif parameters.exchange == "kraken":
-    api_factory = binance.KrakenApiCreator()
+if parameters.exchange in APIs:
+    api_factory = APIs[parameters.exchange]
 else:
     raise AttributeError("Invalid argument: exchange unknown")
 
