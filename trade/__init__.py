@@ -2,9 +2,6 @@ class TradeClient:
     def __init__(self):
         self._client = None
 
-    def cancel_all(self, product):
-        pass
-
     @property
     def client(self):
         return self._client

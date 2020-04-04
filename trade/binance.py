@@ -23,10 +23,6 @@ class BinTradeClient(TradeClient):
         except Exception:
             raise
 
-    def cancel_all(self, product):
-        # not available on binance API
-        pass
-
 
 class BinProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):

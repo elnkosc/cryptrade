@@ -25,12 +25,6 @@ class CBTradeClient(TradeClient):
         except Exception:
             raise
 
-    def cancel_all(self, product):
-        try:
-            self._client.cancel_all(product.prod_id)
-        except Exception:
-            pass
-
 
 class CBProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):
