@@ -15,6 +15,8 @@ if parameters.exchange == "coinbase":
     api_factory = coinbase.CBApiCreator()
 elif parameters.exchange == "binance":
     api_factory = binance.BinApiCreator()
+elif parameters.exchange == "kraken":
+    api_factory = binance.KrakenApiCreator()
 else:
     raise AttributeError("Invalid argument: exchange unknown")
 
