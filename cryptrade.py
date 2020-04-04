@@ -9,7 +9,7 @@ import time
 import json
 
 # Define general preferences
-WAIT_TIME = 5             # refresh time (in seconds) for trade update check
+WAIT_TIME = 10            # refresh time (in seconds) for trade update check
 SINGLE_ORDER_WAIT = 7200  # max time before cancelling a single order (when empty orders are allowed)
 
 # store all your API credentials in cryptrade.json file!
@@ -129,5 +129,4 @@ try:
                  f"Trading result : {selling.value - selling.fee - buying.value - buying.fee:6.2f}")
 
 except Exception:
-    trade_client.cancel_all(trade_product)
     logger.log(logging.BASIC, f"Exception raised: {sys.exc_info()[0]}")

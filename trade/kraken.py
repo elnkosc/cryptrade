@@ -7,33 +7,39 @@ MAKER_FEE = 0.0016  # transaction fee (percentage)
 TAKER_FEE = 0.0026
 
 
+# kraken uses own product IDs; generic ones need to be mapped
+def map_product(prod_id):
+    product_map = {
+        "BCHBTC": "BCHXBT",
+        "ETHBTC": "XETHXXBT",
+        "ETHEUR": "XETHZEUR",
+        "ETHUSD": "XETHZUSD",
+        "LTCBTC": "XLTCXXBT",
+        "LTCEUR": "XLTCZEUR",
+        "LTCUSD": "XLTCZUSD",
+        "XBTEUR": "XXBTZEUR",
+        "XBTUSD": "XXBTZUSD",
+        "XRPBTC": "XXRPXXBT",
+        "XRPEUR": "XXRPZEUR",
+        "XRPUSD": "XXRPZUSD"}
+
+    if prod_id in product_map:
+        return product_map[prod_id]
+    else:
+        return prod_id
+
+
+# kraken uses own currency IDs; some of them need to be mapped to generic ones
 def map_currency(currency):
-    if currency == "XXBT":
-        return "BTC"
-    elif currency == "XETH":
-        return "ETH"
-    elif currency == "ZEUR":
-        return "EUR"
-    elif currency == "ZUSD":
-        return "USD"
-    elif currency == "ZJPY":
-        return "JPY"
-    elif currency == "ZGBP":
-        return "GBP"
-    elif currency == "ZCAD":
-        return "CAD"
-    elif currency == "XZEC":
-        return "ZEC"
-    elif currency == "XXRP":
-        return "XRP"
-    elif currency == "XXMR":
-        return "XMR"
-    elif currency == "XXLM":
-        return "XLM"
-    elif currency == "XXDG":
-        return "XDG"
-    elif currency == "XXBT":
-        return "XBT"
+    currency_map = {
+        "XXBT": "BTC",
+        "XETH": "ETH",
+        "ZEUR": "EUR",
+        "ZUSD": "USD",
+        "XXRP": "XRP"}
+
+    if currency in currency_map:
+        return currency_map[currency]
     else:
         return currency
 
@@ -55,18 +61,15 @@ class KrakenTradeClient(TradeClient):
         except Exception:
             raise
 
-    def cancel_all(self, product):
-        # not supported on kraken
-        pass
-
 
 class KrakenProduct(Product):
-
     def __init__(self, auth_client, trading_currency, buying_currency):
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = self._trading_currency + self._buying_currency
-            product = self._auth_client.client.query_public("AssetPairs", {"pair": f"{self._prod_id}"})
+            self._prod_id = map_product(self._trading_currency + self._buying_currency)
+
+            product_data = {"pair": f"{self._prod_id}"}
+            product = self._auth_client.client.query_public("AssetPairs", product_data)
 
             if "result" in product:
                 for k, v in product["result"].items():
@@ -116,7 +119,7 @@ class KrakenOrder(Order):
 
             if "result" in order_result and "txid" in order_result["result"]:
                 self._created = True
-                self._order_id = order_result["result"]["txid"]
+                self._order_id = order_result["result"]["txid"][0]
                 self._status = "created"
                 self._filled_size = 0.0
                 self._executed_value = 0.0
@@ -138,7 +141,8 @@ class KrakenOrder(Order):
 
     def status(self):
         try:
-            order_update = self._auth_client.client.query_private("QueryOrders", {"txid": self._order_id})
+            order_data = {"txid": self._order_id}
+            order_update = self._auth_client.client.query_private("QueryOrders", order_data)
 
             if "result" in order_update:
                 self._status = order_update["result"]["status"]
