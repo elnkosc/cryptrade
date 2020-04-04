@@ -12,20 +12,22 @@ import json
 WAIT_TIME = 10            # refresh time (in seconds) for trade update check
 SINGLE_ORDER_WAIT = 7200  # max time before cancelling a single order (when empty orders are allowed)
 
-# store all your API credentials in cryptrade.json file!
-credentials = json.load(open("cryptrade.json", "r"))
+# store all your API credentials in json file!
+credentials = json.load(open(__file__.replace(".py", ".json"), "r"))
 
 # create global object instances
 parameters = CommandLine()
 logger = logging.Logger(parameters.logging_level)
 
+APIs = {
+    "coinbase": coinbase.CBApiCreator(),
+    "binance": binance.BinApiCreator(),
+    "kraken": kraken.KrakenApiCreator()
+}
+
 # create abstract factory for API instantiation
-if parameters.exchange == "coinbase":
-    api_factory = coinbase.CBApiCreator()
-elif parameters.exchange == "binance":
-    api_factory = binance.BinApiCreator()
-elif parameters.exchange == "kraken":
-    api_factory = kraken.KrakenApiCreator()
+if parameters.exchange in APIs:
+    api_factory = APIs[parameters.exchange]
 else:
     raise AttributeError("Invalid argument: exchange unknown")
 
