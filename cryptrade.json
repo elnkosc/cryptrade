@@ -6,6 +6,9 @@
   "binance" : {
       "api_key" : "",
       "api_secret" : "" },
+  "kraken" : {
+      "api_key" : "",
+      "api_secret" : "" },
   "pushbullet" : {
       "api_key" : "" }
 }
