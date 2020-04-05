@@ -6,6 +6,13 @@ import sys
 TRANSACTION_FEE = 0.005  # transaction fee (percentage)
 
 
+def map_product(trading_currency, buying_currency):
+    return trading_currency + "-" + buying_currency
+
+def map_currency(currency):
+    return currency
+
+
 class CBTradeClient(TradeClient):
     def __init__(self, credentials):
         super().__init__()
@@ -30,7 +37,7 @@ class CBProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = self._trading_currency + "-" + self._buying_currency
+            self._prod_id = map_product(self._trading_currency, self._buying_currency)
 
             products = self._auth_client.client.get_products()
             for product in products:
@@ -125,17 +132,11 @@ class CBOrder(Order):
 class CBAccount(Account):
     def update(self, exchange_rate):
         for sub_account in self._auth_client.client.get_accounts():
-            if sub_account["currency"] == self._product.buying_currency:
+            if sub_account["currency"] == map_currency(self._product.buying_currency):
                 self._bc_amount = float(sub_account["balance"])
-            elif sub_account["currency"] == self._product.trading_currency:
+            elif sub_account["currency"] == map_currency(self._product.trading_currency):
                 self._tc_amount = float(sub_account["balance"])
                 self._value = self._tc_amount * exchange_rate
-
-
-class CBAccumulator(Accumulator):
-    def __init__(self, name):
-        super().__init__(name)
-        self._fee = TRANSACTION_FEE
 
 
 class CBApiCreator(ApiCreator):
@@ -154,5 +155,5 @@ class CBApiCreator(ApiCreator):
     def create_account(self, auth_client, product):
         return CBAccount(auth_client, product)
 
-    def create_accumulator(self, name):
-        return CBAccumulator(name)
+    def create_transaction_monitor(self, name):
+        return TransactionMonitor(name, TRANSACTION_FEE)
