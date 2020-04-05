@@ -3,6 +3,7 @@ cryptrade is a project that offers a a high level abstraction of a cryptocurrenc
 * Products, representing what you can actually trade on a crypto exchange, eg. BTC-EUR (buy BTC pay in EUR) or ETH-BTC (buy ETH pay in BTC)
 * Orders, the actual trade (buying or selling) of crypto currency
 * Ticker, providing 'real-time' info on market-price and bid/ask prices
+* Transactions, representing the total of buying/selling transactions
 
 These (abstract) interfaces provide the basic validations needed to successfully trade on an online exchange, make the necessary API calls, and handle the responses.
 
@@ -27,7 +28,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c {eur,btc}, --currency {eur,btc}
+  -c CURRENCY, --currency CURRENCY
                         (Crypto) currency to use for buying.
   -d TRADE_DELTA, --delta TRADE_DELTA
                         Percentage (0.0 < trade < 100.0) by which market price

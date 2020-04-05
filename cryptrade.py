@@ -9,7 +9,7 @@ import time
 import json
 
 # Define general preferences
-WAIT_TIME = 10            # refresh time (in seconds) for trade update check
+WAIT_TIME = 5             # refresh time (in seconds) for trade update check
 SINGLE_ORDER_WAIT = 7200  # max time before cancelling a single order (when empty orders are allowed)
 
 # store all your API credentials in json file!
@@ -36,25 +36,13 @@ trade_client = api_factory.create_trade_client(credentials)
 trade_product = api_factory.create_product(trade_client, parameters.trading_currency, parameters.buying_currency)
 ticker = api_factory.create_ticker(trade_client, trade_product)
 account = api_factory.create_account(trade_client, trade_product)
-buying = api_factory.create_accumulator("buy")
-selling = api_factory.create_accumulator("sell")
+buying = api_factory.create_transaction_monitor("buy")
+selling = api_factory.create_transaction_monitor("sell")
 
 try:
     ticker.update()
-
-    # wait for right market price to start
-    wait_msg = False
-    while ticker.price > parameters.high_price or ticker.price < parameters.low_price:
-        if not wait_msg:
-            wait_msg = True
-            logger.log(logging.BASIC, f"Waiting for price to be in range {parameters.low_price:6.4f} - "
-                                      f"{parameters.high_price:6.4f}")
-        time.sleep(WAIT_TIME)
-        ticker.update()
-
     account.update(ticker.price)
 
-    # start trading!
     buy_units = parameters.basic_units
     sell_units = parameters.basic_units
     trading = True
@@ -64,14 +52,14 @@ try:
         logger.log(logging.DETAILED, f"{ticker}")
 
         # make buy order
-        buy_price = ticker.bid * (1 - parameters.delta)
+        buy_price = min(parameters.high_price, ticker.bid * (1 - parameters.delta))
         buy_amount = min(max(buy_units, parameters.basic_units) * parameters.basic_amount,
                          account.buying_amount / buy_price)
         buy_order = api_factory.create_order(trade_client, trade_product, "buy", buy_price, buy_amount)
         logger.log(logging.DETAILED, f"{buy_order}")
 
         # make sales order
-        sell_price = ticker.ask * (1 + parameters.delta)
+        sell_price = max(parameters.low_price, ticker.ask * (1 + parameters.delta))
         sell_amount = min(max(sell_units, parameters.basic_units) * parameters.basic_amount,
                           account.trading_amount)
         sell_order = api_factory.create_order(trade_client, trade_product, "sell", sell_price, sell_amount)
@@ -110,6 +98,7 @@ try:
             if buy_order.created:
                 if buy_order.status():
                     check_orders = False
+
                     buying.add(buy_order.filled_size, buy_order.executed_value)
 
                     if buy_order.filled_size > 0:
@@ -127,8 +116,8 @@ try:
         account.update(ticker.price)
         logger.log(logging.DETAILED, f"{account}\n{buying}\n{selling}\n")
 
-    logger.alert(logging.BASIC, "TRADING ABORTED!",
-                 f"Trading result : {selling.value - selling.fee - buying.value - buying.fee:6.2f}")
+    logger.alert(logging.BASIC, "TRADING ABORTED! Trading result: ",
+        f"{selling.total_value - selling.total_fee - buying.total_valuevalue - buying.total_feefee:6.2f}")
 
 except Exception:
     logger.log(logging.BASIC, f"Exception raised: {sys.exc_info()[0]}")

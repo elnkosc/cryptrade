@@ -92,9 +92,9 @@ class CommandLine(TradeParameters):
                             help="When specified, allow trading when buying or sales order cannot be made due to "
                                  "insufficient funds.")
         parser.add_argument("-ph", "--high_price", dest="high_price", type=float, default=100000.0, action="store",
-                            help="Start trading when market price is below this value")
+                            help="Do not buy higher than this price")
         parser.add_argument("-pl", "--low_price", dest="low_price", type=float, default=0.0, action="store",
-                            help="Start trading when market price is above this value")
+                            help="Do not sell lower than this price")
 
         args = parser.parse_args()
 

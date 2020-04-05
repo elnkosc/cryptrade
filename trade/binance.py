@@ -5,6 +5,12 @@ import sys
 # global binance constants
 TRANSACTION_FEE = 0.001  # transaction fee (percentage)
 
+def map_product(trading_currency, buying_currency):
+    return trading_currency + buying_currency
+
+def map_currency(currency):
+    return currency
+
 
 class BinTradeClient(TradeClient):
     def __init__(self, credentials):
@@ -28,7 +34,7 @@ class BinProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = self._trading_currency + self._buying_currency
+            self._prod_id = map_product(self._trading_currency, self._buying_currency)
 
             symbol_info = self._auth_client.client.get_symbol_info(self._prod_id)
             for f in symbol_info["filters"]:
@@ -126,25 +132,19 @@ class BinOrder(Order):
 
 class BinAccount(Account):
     def update(self, exchange_rate):
-        asset = self._auth_client.client.get_asset_balance(asset=self._product.buying_currency)
+        asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.buying_currency))
         if asset is not None:
             self._bc_amount = float(asset["free"])
         else:
             self._bc_amount = 0.0
 
-        asset = self._auth_client.client.get_asset_balance(asset=self._product.trading_currency)
+        asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.trading_currency))
         if asset is not None:
             self._tc_amount = float(asset["free"])
         else:
             self._tc_amount = 0.0
 
         self._value = self._tc_amount * exchange_rate
-
-
-class BinAccumulator(Accumulator):
-    def __init__(self, name):
-        super().__init__(name)
-        self._fee = TRANSACTION_FEE
 
 
 class BinApiCreator(ApiCreator):
@@ -163,5 +163,5 @@ class BinApiCreator(ApiCreator):
     def create_account(self, auth_client, product):
         return BinAccount(auth_client, product)
 
-    def create_accumulator(self, name):
-        return BinAccumulator(name)
+    def create_transaction_monitor(self, name):
+        return TransactionMonitor(name, TRANSACTION_FEE)
