@@ -4,9 +4,15 @@ class TradeParameters:
     def __init__(self):
         self._currency = "BTC"
         self._exchange = "coinbase"
+        self._low_price = 0
+        self._high_price = 1000000
         self._delta = 1.5
         self._basic_amount = 0.001
         self._buying_currency = "EUR"
+
+    @property
+    def logging_level(self):
+        return self._logging_level
 
     @property
     def exchange(self):
@@ -21,12 +27,28 @@ class TradeParameters:
         return self._buying_currency
 
     @property
+    def empty_order(self):
+        return self._empty_order
+
+    @property
+    def low_price(self):
+        return self._low_price
+
+    @property
+    def high_price(self):
+        return self._high_price
+
+    @property
     def delta(self):
         return self._delta
 
     @property
     def basic_amount(self):
         return self._basic_amount
+
+    @property
+    def basic_units(self):
+        return self._basic_units
 
 
 class CommandLine(TradeParameters):
@@ -37,7 +59,8 @@ class CommandLine(TradeParameters):
             description="Trade automatically on Coinbase Pro in multiple crypto currencies.",
             epilog="This application will trade the selected currency and volumes. It will create a buying and\n"
                    "sales order that are a specified percentage below and over the market price. When an order\n"
-                   "is matched, a new pair of orders is created.\n"
+                   "is matched, a new pair of orders is created. The amount of units to trade is increased by one\n"
+                   "for the next consecutive order-type while for the other order-type it is decreased by one.\n"
                    "Happy trading!")
 
         # positional parameters
@@ -45,8 +68,7 @@ class CommandLine(TradeParameters):
                             choices=["coinbase", "binance", "kraken"],
                             help="Exchange to trade on. Currently supported: Coinbase Pro, Binance")
         parser.add_argument("currency", type=str, action="store", metavar="currency",
-                            choices=["btc", "eth", "xrp", "ltc", "bch"],
-                            help="Currency to trade in (btc, eth, xrp, ltc, bch).")
+                            help="Currency to trade in")
 
         # optional paramaters
         parser.add_argument("-c", "--currency", dest="buying_currency", type=str, default="eur", action="store",
@@ -57,11 +79,26 @@ class CommandLine(TradeParameters):
                                  "before making a trade (accepts fractional numbers).")
         parser.add_argument("-a", "--amount", dest="trade_amount", type=float, default=0.001, action="store",
                             help="Initial amount to start trading with (btc>=0.001, eth>=0.01, xrp>=1, ltc=0.1).")
+        parser.add_argument("-ph", "--high_price", dest="high_price", type=float, default=100000.0, action="store",
+                            help="Do not buy higher than this price")
+        parser.add_argument("-pl", "--low_price", dest="low_price", type=float, default=0.0, action="store",
+                            help="Do not sell lower than this price")
 
         args = parser.parse_args()
 
         self._currency = args.currency.upper()
         self._exchange = args.exchange.lower()
+        self._low_price = args.low_price
+        self._high_price = args.high_price
         self._delta = args.trade_delta / 100
         self._basic_amount = args.trade_amount
         self._buying_currency = args.buying_currency.upper()
+
+        if self._low_price < 0:
+            raise AttributeError("Invalid argument: low_price, minimum price cannot be negative")
+
+        if self._high_price < self._low_price:
+            raise AttributeError("Invalid argument: high_price, should be higher than low_price")
+
+        if self._delta <= 0 or self._delta >= 1:
+            raise AttributeError("Invalid argument: trade, trade-delta should be between 0 & 100%")
