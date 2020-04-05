@@ -7,36 +7,120 @@ MAKER_FEE = 0.0016  # transaction fee (percentage)
 TAKER_FEE = 0.0026
 
 
-# kraken uses own product IDs; generic ones need to be mapped
-def map_product(prod_id):
+def map_product(trading_currency, buying_currency):
     product_map = {
+        "ADABTC": "ADAXBT",
+        "ALGOBTC": "ALGOXBT",
+        "BATBTC": "BATXBT",
         "BCHBTC": "BCHXBT",
+        "DASHBTC": "DASHXBT",
+        "EOSBTC": "EOSXBT",
+        "GNOBTC": "GNOXBT",
+        "ICXBTC": "ICXXBT",
+        "LINKBTC": "LINKXBT",
+        "LSKBTC": "LSKXBT",
+        "NANOBTC": "NANOXBT",
+        "OMGBTC": "OMGXBT",
+        "PAXGBTC": "PAXGXBT",
+        "QTUMBTC": "QTUMXBT",
+        "SCBTC": "SCXBT",
+        "TRXBTC": "TRXXBT",
+        "USDTUSD": "USDTZUSD",
+        "WAVESBTC": "WAVESXBT",
+        "BTCCHF": "XBTCHF",
+        "BTCDAI": "XBTDAI",
+        "BTCUSDC": "XBTUSDC",
+        "BTCUSDT": "XBTUSDT",
+        "ETCETH": "XETCXETH",
+        "ETCBTC": "XETCXXBT",
+        "ETCEUR": "XETCZEUR",
+        "ETCUSD": "XETCZUSD",
         "ETHBTC": "XETHXXBT",
+        "ETHBTC.d": "XETHXXBT.d",
+        "ETHCAD": "XETHZCAD",
+        "ETHCAD.d": "XETHZCAD.d",
         "ETHEUR": "XETHZEUR",
+        "ETHEUR.d": "XETHZEUR.d",
+        "ETHGBP": "XETHZGBP",
+        "ETHGBP.d": "XETHZGBP.d",
+        "ETHJPY": "XETHZJPY",
+        "ETHJPY.d": "XETHZJPY.d",
         "ETHUSD": "XETHZUSD",
+        "ETHUSD.d": "XETHZUSD.d",
         "LTCBTC": "XLTCXXBT",
         "LTCEUR": "XLTCZEUR",
         "LTCUSD": "XLTCZUSD",
-        "XBTEUR": "XXBTZEUR",
-        "XBTUSD": "XXBTZUSD",
+        "MLNETH": "XMLNXETH",
+        "MLNBTC": "XMLNXXBT",
+        "MLNEUR": "XMLNZEUR",
+        "MLNUSD": "XMLNZUSD",
+        "REPETH": "XREPXETH",
+        "REPBTC": "XREPXXBT",
+        "REPEUR": "XREPZEUR",
+        "REPUSD": "XREPZUSD",
+        "XTZBTC": "XTZXBT",
+        "BTCCAD": "XXBTZCAD",
+        "BTCCAD.d": "XXBTZCAD.d",
+        "BTCEUR": "XXBTZEUR",
+        "BTCEUR.d": "XXBTZEUR.d",
+        "BTCGBP": "XXBTZGBP",
+        "BTCGBP.d": "XXBTZGBP.d",
+        "BTCJPY": "XXBTZJPY",
+        "BTCJPY.d": "XXBTZJPY.d",
+        "BTCUSD": "XXBTZUSD",
+        "BTCUSD.d": "XXBTZUSD.d",
+        "XDGBTC": "XXDGXXBT",
+        "XLMBTC": "XXLMXXBT",
+        "XLMEUR": "XXLMZEUR",
+        "XLMUSD": "XXLMZUSD",
+        "XMRBTC": "XXMRXXBT",
+        "XMREUR": "XXMRZEUR",
+        "XMRUSD": "XXMRZUSD",
         "XRPBTC": "XXRPXXBT",
+        "XRPCAD": "XXRPZCAD",
         "XRPEUR": "XXRPZEUR",
-        "XRPUSD": "XXRPZUSD"}
+        "XRPJPY": "XXRPZJPY",
+        "XRPUSD": "XXRPZUSD",
+        "ZECBTC": "XZECXXBT",
+        "ZECEUR": "XZECZEUR",
+        "ZECUSD": "XZECZUSD",
+        "EURUSD": "ZEURZUSD",
+        "GBPUSD": "ZGBPZUSD",
+        "USDCAD": "ZUSDZCAD",
+        "USDJPY": "ZUSDZJPY"}
 
+    prod_id = trading_currency + buying_currency
     if prod_id in product_map:
         return product_map[prod_id]
     else:
         return prod_id
 
 
-# kraken uses own currency IDs; some of them need to be mapped to generic ones
 def map_currency(currency):
     currency_map = {
-        "XXBT": "BTC",
-        "XETH": "ETH",
-        "ZEUR": "EUR",
-        "ZUSD": "USD",
-        "XXRP": "XRP"}
+        "BTC": "XXBT",
+        "ETH": "XETH",
+        "ETC": "XETC",
+        "LTC": "XLTC",
+        "EUR": "ZEUR",
+        "USD": "ZUSD",
+        "XRP": "XXRP",
+        "KRW": "ZKRW",
+        "JPY": "ZJPY",
+        "GBP": "ZGBP",
+        "CAD": "ZCAD",
+        "ZEC": "XZEC",
+        "XVN": "XXVN",
+        "XTZ": "XXTZ",
+        "XMR": "XXMR",
+        "XLM": "XXLM",
+        "XDG": "XXDG",
+        "REP": "XREP",
+        "NMC": "XNMC",
+        "MLN": "XMLN",
+        "ÏCN": "XICN",
+        "DAO": "XDAO"
+    }
 
     if currency in currency_map:
         return currency_map[currency]
@@ -66,7 +150,7 @@ class KrakenProduct(Product):
     def __init__(self, auth_client, trading_currency, buying_currency):
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = map_product(self._trading_currency + self._buying_currency)
+            self._prod_id = map_product(self._trading_currency, self._buying_currency)
 
             product_data = {"pair": f"{self._prod_id}"}
             product = self._auth_client.client.query_public("AssetPairs", product_data)
@@ -145,9 +229,9 @@ class KrakenOrder(Order):
             order_update = self._auth_client.client.query_private("QueryOrders", order_data)
 
             if "result" in order_update:
-                self._status = order_update["result"]["status"]
-                self._filled_size = float(order_update["result"]["vol_exec"])
-                self._executed_value = self._filled_size * float(order_update["result"]["price"])
+                self._status = order_update["result"][self._order_id]["status"]
+                self._filled_size = float(order_update["result"][self._order_id]["vol_exec"])
+                self._executed_value = self._filled_size * float(order_update["result"][self._order_id]["price"])
                 if self._status in ["closed", "canceled", "expired"]:
                     self._settled = True
             else:
@@ -174,17 +258,11 @@ class KrakenAccount(Account):
 
         if "result" in account_info:
             for k, v in account_info["result"].items():
-                if map_currency(k) == self._product.buying_currency:
+                if k == map_currency(self._product.buying_currency):
                     self._bc_amount = float(v)
-                elif map_currency(k) == self._product.trading_currency:
+                elif k == map_currency(self._product.trading_currency):
                     self._tc_amount = float(v)
                     self._value = self._tc_amount * exchange_rate
-
-
-class KrakenAccumulator(Accumulator):
-    def __init__(self, name):
-        super().__init__(name)
-        self._fee = MAKER_FEE
 
 
 class KrakenApiCreator(ApiCreator):
@@ -203,5 +281,5 @@ class KrakenApiCreator(ApiCreator):
     def create_account(self, auth_client, product):
         return KrakenAccount(auth_client, product)
 
-    def create_accumulator(self, name):
-        return KrakenAccumulator(name)
+    def create_transaction_monitor(self, name):
+        return TransactionMonitor(name, MAKER_FEE)
