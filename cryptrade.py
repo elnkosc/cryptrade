@@ -4,6 +4,7 @@ from trade import binance
 from trade import kraken
 from trade import logging
 from trade.parameters import CommandLine
+from trade import ParameterError
 import sys
 import time
 import json
@@ -25,7 +26,7 @@ APIs = {
 if parameters.exchange in APIs:
     api_factory = APIs[parameters.exchange]
 else:
-    raise AttributeError("Invalid argument: exchange unknown")
+    raise ParameterError("Invalid argument: exchange unknown")
 
 # create the concrete API interfaces
 trade_client = api_factory.create_trade_client(credentials)
@@ -44,6 +45,8 @@ try:
 
         ticker.update()
         logger.log(logging.DETAILED, f"{ticker}")
+        account.update(ticker.price)
+        logger.log(logging.DETAILED, f"{account}")
 
         # make buy order
         buy_price = min(parameters.high_price, ticker.bid * (1 - parameters.delta))
@@ -65,6 +68,7 @@ try:
                     check_orders = False
                     selling.add(sell_order.filled_size, sell_order.executed_value)
                     logger.alert(logging.BASIC, "SELL-ORDER FINISHED", f"{sell_order}")
+                    buy_order.cancel()
                 elif sell_order.error:
                     logger.log(logging.DETAILED, sell_order.message)
 
@@ -73,14 +77,9 @@ try:
                     check_orders = False
                     buying.add(buy_order.filled_size, buy_order.executed_value)
                     logger.alert(logging.BASIC, "BUY-ORDER FINISHED", f"{buy_order}")
+                    sell_order.cancel()
                 elif buy_order.error:
                     logger.log(logging.DETAILED, buy_order.message)
-
-        # cancel any (matching) order(s)
-        sell_order.cancel()
-        buy_order.cancel()
-
-        account.update(ticker.price)
 
     logger.alert(logging.BASIC, "TRADING ABORTED!")
 
