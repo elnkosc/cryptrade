@@ -16,7 +16,7 @@ class ProductError(CryptradeError):
         self._message = message
 
     def __str__(self):
-        return __name__ + ": Unsupported trade-pair specified, " + self._message
+        return __name__ + ": Unsupported cryptrade-pair specified, " + self._message
 
 
 class ParameterError(CryptradeError):

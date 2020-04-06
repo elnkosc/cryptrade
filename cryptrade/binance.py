@@ -1,5 +1,5 @@
 from binance.client import Client as BinClient
-from trade import *
+from cryptrade import *
 import sys
 
 # global binance constants

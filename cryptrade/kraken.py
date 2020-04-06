@@ -1,5 +1,5 @@
 import krakenex
-from trade import *
+from cryptrade import *
 import sys
 
 # coinbase constants
