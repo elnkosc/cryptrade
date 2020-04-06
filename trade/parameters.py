@@ -1,4 +1,5 @@
 import argparse
+from trade import ParameterError
 
 class TradeParameters:
     def __init__(self):
@@ -110,13 +111,13 @@ class CommandLine(TradeParameters):
         self._buying_currency = args.buying_currency.upper()
 
         if self._low_price < 0:
-            raise AttributeError("Invalid argument: low_price, minimum price cannot be negative")
+            raise ParameterError("low_price, minimum price cannot be negative")
 
         if self._high_price < self._low_price:
-            raise AttributeError("Invalid argument: high_price, should be higher than low_price")
+            raise ParameterError("high_price, should be higher than low_price")
 
         if self._delta <= 0 or self._delta >= 1:
-            raise AttributeError("Invalid argument: trade, trade-delta should be between 0 & 100%")
+            raise ParameterError("trade, trade-delta should be between 0 & 100%")
 
         if self._basic_units <= 0:
-            raise AttributeError("Invalid argument: units, should be higher than 0")
+            raise ParameterError("units, should be higher than 0")
