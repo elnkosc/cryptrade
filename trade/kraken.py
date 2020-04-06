@@ -138,12 +138,12 @@ class KrakenTradeClient(TradeClient):
             api_key = credentials["kraken"]["api_key"]
             api_secret = credentials["kraken"]["api_secret"]
         else:
-            raise AttributeError("missing or invalid credentials for kraken")
+            raise ParameterError("missing or invalid credentials for Kraken")
 
         try:
             self._client = krakenex.API(api_key, api_secret)
         except Exception:
-            raise
+            raise AuthenticationError("invalid Kraken API key and/or secret")
 
 
 class KrakenProduct(Product):
@@ -161,11 +161,12 @@ class KrakenProduct(Product):
                     self._min_price = 1 / 10 ** v["pair_decimals"]
                     self._min_order_value = 0
             else:
-                print(self._prod_id)
-                raise AttributeError(product["error"][0])
+                raise ProductError(product["error"][0])
 
-        except Exception:
+        except ProductError:
             raise
+        except Exception:
+            raise ProductError(f"{trading_currency}/{buying_currency} not supported on Kraken")
 
 
 class KrakenTicker(Ticker):
@@ -177,8 +178,6 @@ class KrakenTicker(Ticker):
                     self._bid = float(v["b"][0])
                     self._ask = float(v["a"][0])
                     self._price = float(v["c"][0])
-            else:
-                raise AttributeError(product_ticker["error"][0])
 
         except Exception:
             # ignore exceptions
@@ -236,7 +235,7 @@ class KrakenOrder(Order):
                     self._settled = True
             else:
                 self._settled = True
-                raise AttributeError(order_update["error"])
+                raise AttributeError(order_update["error"][0])
 
         except Exception:
             self._status = "error"

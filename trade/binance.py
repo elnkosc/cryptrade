@@ -22,12 +22,12 @@ class BinTradeClient(TradeClient):
             api_key = credentials["binance"]["api_key"]
             api_secret = credentials["binance"]["api_secret"]
         else:
-            raise AttributeError("missing or invalid credentials for binance")
+            raise ParameterError("missing or invalid credentials for Binance")
 
         try:
             self._client = BinClient(api_key, api_secret)
         except Exception:
-            raise
+            raise AuthenticationError("invalid Binance API key and/or secret")
 
 
 class BinProduct(Product):
@@ -46,7 +46,7 @@ class BinProduct(Product):
                     self._min_amount = float(f["minQty"])
 
         except Exception:
-            raise
+            raise ProductError(f"{trading_currency}/{buying_currency} not supported on Binance")
 
 
 class BinTicker(Ticker):
@@ -58,6 +58,7 @@ class BinTicker(Ticker):
             self._price = float(product_ticker["lastPrice"])
 
         except Exception:
+            # ignore exceptions
             pass
 
 

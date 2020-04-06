@@ -25,12 +25,12 @@ class CBTradeClient(TradeClient):
             api_secret = credentials["coinbase"]["api_secret"]
             api_pass = credentials["coinbase"]["api_pass"]
         else:
-            raise AttributeError("missing or invalid credentials for coinbase")
+            raise ParameterError("missing or invalid credentials for Coinbase Pro")
 
         try:
             self._client = cbpro.AuthenticatedClient(api_key, api_secret, api_pass)
         except Exception:
-            raise
+            raise AuthenticationError("invalid Coinbase API key, secret, and/or password")
 
 
 class CBProduct(Product):
@@ -48,7 +48,7 @@ class CBProduct(Product):
             self._min_order_value = self._min_price
 
         except Exception:
-            raise
+            raise ProductError(f"{trading_currency}/{buying_currency} not supported on Coinbase Pro")
 
 
 class CBTicker(Ticker):
@@ -61,8 +61,8 @@ class CBTicker(Ticker):
                 self._price = float(product_ticker["price"])
 
         except Exception:
+            # ignore exceptions
             pass
-
 
 class CBOrder(Order):
     def __init__(self, auth_client, product, order_type, price, amount):
