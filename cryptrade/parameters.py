@@ -1,5 +1,5 @@
 import argparse
-from trade import ParameterError
+from cryptrade import ParameterError
 
 class TradeParameters:
     def __init__(self):
@@ -61,27 +61,27 @@ class CommandLine(TradeParameters):
 
         parser = argparse.ArgumentParser(
             description="Trade automatically on Coinbase Pro in multiple crypto currencies.",
-            epilog="This application will trade the selected currency and volumes. It will create a buying and\n"
+            epilog="This application will cryptrade the selected currency and volumes. It will create a buying and\n"
                    "sales order that are a specified percentage below and over the market price. When an order\n"
-                   "is matched, a new pair of orders is created. The amount of units to trade is increased by one\n"
+                   "is matched, a new pair of orders is created. The amount of units to cryptrade is increased by one\n"
                    "for the next consecutive order-type while for the other order-type it is decreased by one.\n"
                    "Happy trading!")
 
         # positional parameters
         parser.add_argument("exchange", type=str, action="store", metavar="exchange",
                             choices=["coinbase", "binance", "kraken"],
-                            help="Exchange to trade on. Currently supported: Coinbase Pro, Binance")
+                            help="Exchange to cryptrade on. Currently supported: Coinbase Pro, Binance")
         parser.add_argument("currency", type=str, action="store", metavar="currency",
                             choices=["btc", "eth", "xrp", "ltc", "bch"],
-                            help="Currency to trade in (btc, eth, xrp, ltc, bch).")
+                            help="Currency to cryptrade in (btc, eth, xrp, ltc, bch).")
 
         # optional paramaters
         parser.add_argument("-c", "--currency", dest="buying_currency", type=str, default="eur", action="store",
                             choices=["eur", "btc"],
                             help="(Crypto) currency to use for buying.")
         parser.add_argument("-d", "--delta", dest="trade_delta", type=float, default=1.5, action="store",
-                            help="Percentage (0.0 < trade < 100.0) by which market price should change "
-                                 "before making a trade (accepts fractional numbers).")
+                            help="Percentage (0.0 < cryptrade < 100.0) by which market price should change "
+                                 "before making a cryptrade (accepts fractional numbers).")
         parser.add_argument("-a", "--amount", dest="trade_amount", type=float, default=0.001, action="store",
                             help="Initial amount to start trading with (btc>=0.001, eth>=0.01, xrp>=1, ltc=0.1).")
         parser.add_argument("-u", "--units", dest="trade_units", type=int, default=1, action="store",
@@ -117,7 +117,7 @@ class CommandLine(TradeParameters):
             raise ParameterError("high_price, should be higher than low_price")
 
         if self._delta <= 0 or self._delta >= 1:
-            raise ParameterError("trade, trade-delta should be between 0 & 100%")
+            raise ParameterError("cryptrade, cryptrade-delta should be between 0 & 100%")
 
         if self._basic_units <= 0:
             raise ParameterError("units, should be higher than 0")

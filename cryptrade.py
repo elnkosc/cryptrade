@@ -1,16 +1,16 @@
 #!/usr/bin/python3.7
-from trade import coinbase
-from trade import binance
-from trade import kraken
-from trade import logging
-from trade.parameters import CommandLine
-from trade import ParameterError
+from cryptrade import coinbase
+from cryptrade import binance
+from cryptrade import kraken
+from cryptrade import logging
+from cryptrade.parameters import CommandLine
+from cryptrade import ParameterError
 
 import time
 import json
 
 # Define general preferences
-WAIT_TIME = 15            # refresh time (in seconds) for trade update check
+WAIT_TIME = 15            # refresh time (in seconds) for cryptrade update check
 SINGLE_ORDER_WAIT = 7200  # max time before cancelling a single order (when empty orders are allowed)
 
 APIs = {

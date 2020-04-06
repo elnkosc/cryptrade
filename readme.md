@@ -3,7 +3,7 @@ cryptrade is a project that offers a a high level abstraction of a cryptocurrenc
 * Products, representing what you can actually trade on a crypto exchange, eg. BTC-EUR (buy BTC pay in EUR) or ETH-BTC (buy ETH pay in BTC)
 * Orders, the actual trade (buying or selling) of crypto currency
 * Ticker, providing 'real-time' info on market-price and bid/ask prices
-* Transactions, representing the total of buying/selling transactions
+* Transaction Monitor, representing the total of buying/selling transactions
 
 These (abstract) interfaces provide the basic validations needed to successfully trade on an online exchange, make the necessary API calls, and handle the responses.
 
@@ -37,6 +37,10 @@ optional arguments:
   -a TRADE_AMOUNT, --amount TRADE_AMOUNT
                         Initial amount to start trading with (btc>=0.001,
                         eth>=0.01, xrp>=1, ltc=0.1).
+  -ph HIGH_PRICE, --high_price HIGH_PRICE
+                        Do not buy higher than this price.
+  -pl LOW_PRICE, --low_price LOW_PRICE
+                        Do not sell lower than this price.
 ~~~~
 
 Make sure you provide your credentials (API key & secret) before using it. They should be stored in a json file like:
