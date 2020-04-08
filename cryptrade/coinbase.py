@@ -124,8 +124,7 @@ class CBOrder(Order):
     def cancel(self):
         try:
             super().cancel()
-            if not self._settled:
-               self._auth_client.client.cancel_order(self.order_id)
+            self._auth_client.client.cancel_order(self.order_id)
         except Exception:
             self._message = "Cancellation failed"
 
