@@ -124,11 +124,12 @@ class BinOrder(Order):
         return self._settled
 
     def cancel(self):
-        try:
-            super().cancel()
-            self._auth_client.client.cancel_order(symbol=self._product.prod_id, orderId=self._order_id)
-        except Exception:
-            self._message = "Cancellation failed"
+        if not self._settled:
+            try:
+                super().cancel()
+                self._auth_client.client.cancel_order(symbol=self._product.prod_id, orderId=self._order_id)
+            except Exception:
+                self._message = "Cancellation failed"
 
 
 class BinAccount(Account):
