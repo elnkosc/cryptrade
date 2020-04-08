@@ -246,7 +246,8 @@ class KrakenOrder(Order):
     def cancel(self):
         try:
             super().cancel()
-            self._auth_client.client.query_private("CancelOrder", {"txid": self.order_id})
+            if not self._settled:
+                self._auth_client.client.query_private("CancelOrder", {"txid": self.order_id})
         except Exception:
             self._message = "Cancellation failed"
 

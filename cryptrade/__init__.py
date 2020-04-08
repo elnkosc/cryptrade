@@ -1,3 +1,11 @@
+import math
+
+
+def trunc_dec(number, digits):
+    stepper = 10 ** digits
+    return math.trunc(stepper * number) / stepper
+
+
 class CryptradeError(Exception):
     def __init__(self, *args):
         pass
@@ -78,13 +86,13 @@ class Product:
 
     def format_price(self, price):
         if self._min_price > 0:
-            return round(price, len(str(self._min_price))-2)
+            return trunc_dec(price, len(str(self._min_price)) - 2)
         else:
             return price
 
     def format_amount(self, amount):
         if self._min_amount > 0:
-            return round(amount, len(str(self._min_amount))-2)
+            return trunc_dec(amount, len(str(self._min_amount)) - 2)
         else:
             return amount
 
