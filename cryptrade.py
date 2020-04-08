@@ -49,15 +49,13 @@ while trading:
 
     # make buy order
     buy_price = min(parameters.high_price, ticker.bid * (1 - parameters.delta))
-    buy_amount = min(max(buy_units, parameters.basic_units) * parameters.basic_amount,
-                     account.buying_amount / buy_price)
+    buy_amount = min(buy_units * parameters.basic_amount, account.buying_amount / buy_price)
     buy_order = api_factory.create_order(trade_client, trade_product, "buy", buy_price, buy_amount)
     logger.log(logging.DETAILED, f"{buy_order}")
 
     # make sales order
     sell_price = max(parameters.low_price, ticker.ask * (1 + parameters.delta))
-    sell_amount = min(max(sell_units, parameters.basic_units) * parameters.basic_amount,
-                      account.trading_amount)
+    sell_amount = min(sell_units * parameters.basic_amount, account.trading_amount)
     sell_order = api_factory.create_order(trade_client, trade_product, "sell", sell_price, sell_amount)
     logger.log(logging.DETAILED, f"{sell_order}")
 
@@ -83,10 +81,10 @@ while trading:
                 check_orders = False
                 selling.add(sell_order.filled_size, sell_order.executed_value)
                 if sell_order.filled_size > 0:
-                    buy_units -= 1
+                    if buy_units > 1:
+                        buy_units -= 1
                     sell_units += 1
                 logger.alert(logging.BASIC, "SELL-ORDER FINISHED", f"{sell_order}")
-                buy_order.cancel()
             elif sell_order.error:
                 logger.log(logging.DETAILED, sell_order.message)
 
@@ -95,14 +93,16 @@ while trading:
                 check_orders = False
                 buying.add(buy_order.filled_size, buy_order.executed_value)
                 if buy_order.filled_size > 0:
-                    sell_units -= 1
+                    if sell_units > 1:
+                        sell_units -= 1
                     buy_units += 1
                 logger.alert(logging.BASIC, "BUY-ORDER FINISHED", f"{buy_order}")
-                sell_order.cancel()
             elif buy_order.error:
                 logger.log(logging.DETAILED, buy_order.message)
 
+    buy_order.cancel()
+    sell_order.cancel()
     logger.log(logging.DETAILED, f"{buying}\n{selling}\n")
 
 logger.alert(logging.BASIC, "TRADING ABORTED! Trading result: ",
-             f"{selling.total_value - selling.total_fee - buying.total_valuevalue - buying.total_feefee:6.2f}")
+             f"{selling.total_value - selling.total_fee - buying.total_value - buying.total_fee:6.2f}")
