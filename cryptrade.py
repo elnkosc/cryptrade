@@ -81,7 +81,7 @@ while trading:
                 check_orders = False
                 selling.add(sell_order.filled_size, sell_order.executed_value)
                 if sell_order.filled_size > 0:
-                    if buy_units > 1:
+                    if buy_units > parameters.basic_units:
                         buy_units -= 1
                     sell_units += 1
                 logger.alert(logging.BASIC, "SELL-ORDER FINISHED", f"{sell_order}")
@@ -93,7 +93,7 @@ while trading:
                 check_orders = False
                 buying.add(buy_order.filled_size, buy_order.executed_value)
                 if buy_order.filled_size > 0:
-                    if sell_units > 1:
+                    if sell_units > parameters.basic_units:
                         sell_units -= 1
                     buy_units += 1
                 logger.alert(logging.BASIC, "BUY-ORDER FINISHED", f"{buy_order}")
