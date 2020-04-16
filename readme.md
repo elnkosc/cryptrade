@@ -17,6 +17,8 @@ At this moment, the following crypto exchanges are supported:
 
 The classes for these exchanges are offered through an abstract factory so you can transparently switch in your client program between the different exchanges (or use them in parallel).
 
+The main interfaces are synchronous. The Ticker & Account interfaces include asynchronous interfaces.
+
 cryptrade.py is a sample program that is added to show the usage of this package. It's operation can be directed using commandline parameters.
 ~~~~
 usage: cryptrade.py [-h] [-c {eur,btc}] [-d TRADE_DELTA] [-a TRADE_AMOUNT]
@@ -25,7 +27,7 @@ usage: cryptrade.py [-h] [-c {eur,btc}] [-d TRADE_DELTA] [-a TRADE_AMOUNT]
 positional arguments:
   exchange              Exchange to trade on. Currently supported: coinbase,
                         binance, kraken, bitfinex
-  currency              Currency to trade in (btc, eth, xrp, ltc, bch).
+  currency              Currency to trade in: btc, eth, xrp, ltc, bch, ...
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -43,6 +45,7 @@ optional arguments:
   -pl LOW_PRICE, --low_price LOW_PRICE
                         Do not sell lower than this price.
 ~~~~
+tickerlog.py is added as a sample program for using the asynchronous interfaces.
 
 Make sure you provide your credentials (API key & secret) before using it. They should be stored in a json file like:
 ~~~~
