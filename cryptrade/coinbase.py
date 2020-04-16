@@ -1,6 +1,7 @@
 import cbpro
 from cryptrade import *
 import sys
+import time
 
 # coinbase constants
 TRANSACTION_FEE = 0.005  # transaction fee (percentage)
@@ -8,6 +9,7 @@ TRANSACTION_FEE = 0.005  # transaction fee (percentage)
 
 def map_product(trading_currency, buying_currency):
     return trading_currency + "-" + buying_currency
+
 
 def map_currency(currency):
     return currency
@@ -55,14 +57,22 @@ class CBTicker(Ticker):
     def update(self):
         try:
             product_ticker = self._auth_client.client.get_product_ticker(self._product.prod_id)
+
             if "trade_id" in product_ticker:
                 self._bid = float(product_ticker["bid"])
                 self._ask = float(product_ticker["ask"])
                 self._price = float(product_ticker["price"])
+                self._timestamp = time.time()
 
         except Exception:
             # ignore exceptions
             pass
+
+    async def start(self):
+        while True:
+            self.update()
+            yield self
+
 
 class CBOrder(Order):
     def __init__(self, auth_client, product, order_type, price, amount):
@@ -131,13 +141,22 @@ class CBOrder(Order):
 
 
 class CBAccount(Account):
-    def update(self, exchange_rate):
-        for sub_account in self._auth_client.client.get_accounts():
-            if sub_account["currency"] == map_currency(self._product.buying_currency):
-                self._bc_amount = float(sub_account["balance"])
-            elif sub_account["currency"] == map_currency(self._product.trading_currency):
-                self._tc_amount = float(sub_account["balance"])
-                self._value = self._tc_amount * exchange_rate
+    def update(self):
+        try:
+            for sub_account in self._auth_client.client.get_accounts():
+                if sub_account["currency"] == map_currency(self._product.buying_currency):
+                    self._bc_amount = float(sub_account["balance"])
+                elif sub_account["currency"] == map_currency(self._product.trading_currency):
+                    self._tc_amount = float(sub_account["balance"])
+
+        except Exception:
+            # ignore
+            pass
+
+    async def start(self):
+        while True:
+            self.update()
+            yield self
 
 
 class CBApiCreator(ApiCreator):

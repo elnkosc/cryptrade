@@ -13,6 +13,7 @@ At this moment, the following crypto exchanges are supported:
 * Coinbase Pro (http://pro.coinbase.com), formerly known as GDAX
 * Binance (http://binance.com)
 * Kraken (http://www.kraken.com)
+* Bitfinex (http://bitfinex.com)
 
 The classes for these exchanges are offered through an abstract factory so you can transparently switch in your client program between the different exchanges (or use them in parallel).
 
@@ -23,7 +24,7 @@ usage: cryptrade.py [-h] [-c {eur,btc}] [-d TRADE_DELTA] [-a TRADE_AMOUNT]
 
 positional arguments:
   exchange              Exchange to trade on. Currently supported: coinbase,
-                        binance, kraken
+                        binance, kraken, bitfinex
   currency              Currency to trade in (btc, eth, xrp, ltc, bch).
 
 optional arguments:
@@ -61,11 +62,16 @@ Make sure you provide your credentials (API key & secret) before using it. They 
     {
         "api_key" : "your api key",
         "api_secret" : "your api secret"
+    },
+    "bitfinex" :
+    {
+        "api_key" : "your api key",
+        "api_secret" : "your api secret"
     }
 }
 ~~~~
 
-This project uses the official python interface for [binance.com](http://python-binance.readthedocs.io/en/latest) as well as the 'unofficial' python interface for [Coinbase Pro](https://github.com/danpaquin/coinbasepro-python) by Daniel Paquin and the official python interface for [Kraken.com](https://github.com/veox/python3-krakenex).
+This project uses the official python interface for [binance.com](http://python-binance.readthedocs.io/en/latest) as well as the 'unofficial' python interface for [Coinbase Pro](https://github.com/danpaquin/coinbasepro-python) by Daniel Paquin, the official python interface for [Kraken.com](https://github.com/veox/python3-krakenex), and the official python interface from [bitfinex.com](https://github.com/bitfinexcom/bitfinex-api-py).
 
 Special requests or questions: send me a message!
 

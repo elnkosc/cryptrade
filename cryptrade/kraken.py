@@ -1,8 +1,9 @@
 import krakenex
 from cryptrade import *
 import sys
+import time
 
-# coinbase constants
+# kraken constants
 MAKER_FEE = 0.0016  # transaction fee (percentage)
 TAKER_FEE = 0.0026
 
@@ -178,10 +179,16 @@ class KrakenTicker(Ticker):
                     self._bid = float(v["b"][0])
                     self._ask = float(v["a"][0])
                     self._price = float(v["c"][0])
+                    self._timestamp = time.time()
 
         except Exception:
             # ignore exceptions
             pass
+
+    async def start(self):
+        while True:
+            self.update()
+            yield self
 
 
 class KrakenOrder(Order):
@@ -253,16 +260,25 @@ class KrakenOrder(Order):
 
 
 class KrakenAccount(Account):
-    def update(self, exchange_rate):
-        account_info = self._auth_client.client.query_private("Balance")
+    def update(self):
+        try:
+            account_info = self._auth_client.client.query_private("Balance")
 
-        if "result" in account_info:
-            for k, v in account_info["result"].items():
-                if k == map_currency(self._product.buying_currency):
-                    self._bc_amount = float(v)
-                elif k == map_currency(self._product.trading_currency):
-                    self._tc_amount = float(v)
-                    self._value = self._tc_amount * exchange_rate
+            if "result" in account_info:
+                for k, v in account_info["result"].items():
+                    if k == map_currency(self._product.buying_currency):
+                        self._bc_amount = float(v)
+                    elif k == map_currency(self._product.trading_currency):
+                        self._tc_amount = float(v)
+
+        except Exception:
+            # ignore
+            pass
+
+    async def start(self):
+        while True:
+            self.update()
+            yield self
 
 
 class KrakenApiCreator(ApiCreator):
