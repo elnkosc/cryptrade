@@ -9,6 +9,9 @@
   "kraken" : {
       "api_key" : "uQT8y3jL5+PL1xoXMSuZ/y8HiE4NCUjvTFlnEIVfocrrJzizZA8K+aDc",
       "api_secret" : "vGdm+gFJCGXlkYI28REfebFPlWhdmW2QPNFy5sm+bkQBTWYE7TTrCeHhZVFPmciTuMGX/+HcLCkalN5Y6KSfRA==" },
+  "bitfinex" : {
+      "api_key" : "F4TMEQ9gORlGOHnwDODhvPz6XRPacJcT8ppCFsBxyGx",
+      "api_secret" : "54AANbtugyNVUdP994xjuhxhMaJOCFA791adOUNcfKB" },
   "pushbullet" : {
       "api_key" : "o.DO1wLeDTw4k2WcO20MKCQLsYVjTpwt63" }
 }

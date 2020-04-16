@@ -2,6 +2,7 @@
 from cryptrade import coinbase
 from cryptrade import binance
 from cryptrade import kraken
+from cryptrade import bitfinex
 from cryptrade import logging
 from cryptrade.parameters import CommandLine
 from cryptrade import ParameterError
@@ -10,13 +11,14 @@ import time
 import json
 
 # Define general preferences
-WAIT_TIME = 15            # refresh time (in seconds) for cryptrade update check
+WAIT_TIME = 60            # refresh time (in seconds) for cryptrade update check
 SINGLE_ORDER_WAIT = 7200  # max time before cancelling a single order (when empty orders are allowed)
 
 APIs = {
     "coinbase": coinbase.CBApiCreator(),
     "binance": binance.BinApiCreator(),
-    "kraken": kraken.KrakenApiCreator()
+    "kraken": kraken.KrakenApiCreator(),
+    "bitfinex": bitfinex.BfxApiCreator()
 }
 
 parameters = CommandLine()
@@ -41,10 +43,12 @@ sell_units = parameters.basic_units
 trading = True
 while trading:
 
+    logger.log(logging.BASIC, "********** New Trade **********")
+
     ticker.update()
     logger.log(logging.DETAILED, f"{ticker}")
 
-    account.update(ticker.price)
+    account.update()
     logger.log(logging.DETAILED, f"{account}")
 
     # make buy order

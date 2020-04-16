@@ -1,4 +1,6 @@
 import math
+import asyncio
+import time
 
 
 def trunc_dec(number, digits):
@@ -33,6 +35,33 @@ class ParameterError(CryptradeError):
 
     def __str__(self):
         return __name__ + ": Invalid parameter(s), " + self._message
+
+
+class History:
+    def __init__(self, name, item, interval, max_items):
+        self._name = name
+        self._item = item
+        self._interval = interval
+        self._max_items = max_items
+        self._history_count = 0
+        self._history = []
+
+    async def start(self):
+        async for item in self._item.start():
+            self._history_count += 1
+            if self._history_count > self._max_items:
+                self._history.pop(0)
+
+            self._history.append(item)
+            print(self)
+            await asyncio.sleep(self._interval)
+
+    # just pretty print last value
+    def __str__(self):
+        if self._history_count == 0:
+            return ""
+        else:
+            return f"{self._name}\n{self._history[-1]}"
 
 
 class TradeClient:
@@ -97,7 +126,7 @@ class Product:
             return amount
 
     def __str__(self):
-        return f"{self._trading_currency} : {self._buying_currency}"
+        return f"{self._trading_currency}-{self._buying_currency}"
 
 
 class Ticker:
@@ -107,8 +136,12 @@ class Ticker:
         self._ask = 0.0
         self._bid = 0.0
         self._price = 0.0
+        self._timestamp = None
 
     def update(self):
+        self._timestamp = time.time()
+
+    async def start(self):
         pass
 
     @property
@@ -128,11 +161,13 @@ class Ticker:
         return self._price
 
     def __str__(self):
-        return (f"*** Ticker Update: {self._product} ***\n"
+        time_format = "%Y-%m-%d %H:%M:%S"
+        return (f"Ticker: {self._product}\n"
+                f"Time  : {time.strftime(time_format, time.localtime(self._timestamp))}\n"
                 f"Price : {self._price:8.4f}\n"
                 f"Bid   : {self._bid:8.4f}\n"
                 f"Ask   : {self._ask:8.4f}\n"
-                f"Spread: {self.spread:8.4f}")
+                f"Spread: {self.spread:8.4f}\n")
 
 
 class Order:
@@ -183,7 +218,7 @@ class Order:
         self._settled = True
 
     def __str__(self):
-        return (f"*** Order Update ***\n"
+        return (f"Order:\n"
                 f"Order ID      : {self._order_id}\n"
                 f"Product ID    : {self._product.prod_id}\n"
                 f"Type          : {self._order_type}\n"
@@ -193,7 +228,7 @@ class Order:
                 f"Filled Size   : {self._filled_size:2.4f}\n"
                 f"Executed Value: {self._executed_value:4.4f}\n"
                 f"Settled       : {self._settled}\n"
-                f"Message       : {self._message}")
+                f"Message       : {self._message}\n")
 
 
 class Account:
@@ -201,10 +236,13 @@ class Account:
         self._auth_client = auth_client
         self._product = product
         self._tc_amount = 0.0
-        self._value = 0.0
         self._bc_amount = 0.0
+        self._started = False
 
-    def update(self, exchange_rate):
+    def update(self):
+        pass
+
+    async def start(self):
         pass
 
     @property
@@ -215,15 +253,10 @@ class Account:
     def buying_amount(self):
         return self._bc_amount
 
-    @property
-    def value(self):
-        return self._value
-
     def __str__(self):
-        return (f"*** Account({self._product.trading_currency}-{self._product.buying_currency}) ***\n"
-                f"{self._product.buying_currency} : {self._bc_amount:6.4f}\n"
-                f"{self._product.trading_currency} : {self._tc_amount:6.4f} "
-                f"({self._product.buying_currency} {self._value:6.4f})")
+        return (f"Account: {self._product.trading_currency}-{self._product.buying_currency}\n"
+                f"{self._product.buying_currency} : {self._bc_amount:8.4f}\n"
+                f"{self._product.trading_currency} : {self._tc_amount:8.4f}\n")
 
 
 class TransactionMonitor:
@@ -261,11 +294,11 @@ class TransactionMonitor:
         return self._total_fee
 
     def __str__(self):
-        return (f"*** Total {self._name} ***\n"
+        return (f"Total {self._name}\n"
                 f"Transactions: {self._total_number:4d}\n"
                 f"Amount      : {self._total_amount:4.4f}\n"
                 f"Value       : {self._total_value:6.2f}\n"
-                f"Total Fee   : {self._total_fee:6.2f}")
+                f"Total Fee   : {self._total_fee:6.2f}\n")
 
 
 class ApiCreator:

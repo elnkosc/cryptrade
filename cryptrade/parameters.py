@@ -69,15 +69,13 @@ class CommandLine(TradeParameters):
 
         # positional parameters
         parser.add_argument("exchange", type=str, action="store", metavar="exchange",
-                            choices=["coinbase", "binance", "kraken"],
-                            help="Exchange to cryptrade on. Currently supported: Coinbase Pro, Binance")
+                            choices=["coinbase", "binance", "kraken", "bitfinex"],
+                            help="Exchange to cryptrade on. Currently supported: Coinbase Pro, Binance, Bitfinex")
         parser.add_argument("currency", type=str, action="store", metavar="currency",
-                            choices=["btc", "eth", "xrp", "ltc", "bch"],
                             help="Currency to cryptrade in (btc, eth, xrp, ltc, bch).")
 
         # optional paramaters
         parser.add_argument("-c", "--currency", dest="buying_currency", type=str, default="eur", action="store",
-                            choices=["eur", "btc"],
                             help="(Crypto) currency to use for buying.")
         parser.add_argument("-d", "--delta", dest="trade_delta", type=float, default=1.5, action="store",
                             help="Percentage (0.0 < cryptrade < 100.0) by which market price should change "

@@ -1,12 +1,15 @@
 from binance.client import Client as BinClient
 from cryptrade import *
 import sys
+import time
 
 # global binance constants
 TRANSACTION_FEE = 0.001  # transaction fee (percentage)
 
+
 def map_product(trading_currency, buying_currency):
     return trading_currency + buying_currency
+
 
 def map_currency(currency):
     return currency
@@ -56,10 +59,16 @@ class BinTicker(Ticker):
             self._bid = float(product_ticker["bidPrice"])
             self._ask = float(product_ticker["askPrice"])
             self._price = float(product_ticker["lastPrice"])
+            self._timestamp = time.time()
 
         except Exception:
             # ignore exceptions
             pass
+
+    async def start(self):
+        while True:
+            self.update()
+            yield self
 
 
 class BinOrder(Order):
@@ -133,20 +142,28 @@ class BinOrder(Order):
 
 
 class BinAccount(Account):
-    def update(self, exchange_rate):
-        asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.buying_currency))
-        if asset is not None:
-            self._bc_amount = float(asset["free"])
-        else:
-            self._bc_amount = 0.0
+    def update(self):
+        try:
+            asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.buying_currency))
+            if asset is not None:
+                self._bc_amount = float(asset["free"])
+            else:
+                self._bc_amount = 0.0
 
-        asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.trading_currency))
-        if asset is not None:
-            self._tc_amount = float(asset["free"])
-        else:
-            self._tc_amount = 0.0
+            asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.trading_currency))
+            if asset is not None:
+                self._tc_amount = float(asset["free"])
+            else:
+                self._tc_amount = 0.0
 
-        self._value = self._tc_amount * exchange_rate
+        except Exception:
+            # ignore exceptions
+            pass
+
+    async def start(self):
+        while True:
+            self.update()
+            yield self
 
 
 class BinApiCreator(ApiCreator):
