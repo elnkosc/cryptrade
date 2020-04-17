@@ -18,7 +18,7 @@ def map_currency(currency):
         c = "TSD"
     else:
         c = currency
-    return currency
+    return c
 
 def map_product(trading_currency, buying_currency):
     return map_currency(trading_currency) + map_currency(buying_currency)
