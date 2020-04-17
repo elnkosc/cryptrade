@@ -11,12 +11,17 @@ MAKER_FEE = 0.001  # transaction fee (percentage)
 TAKER_FEE = 0.002
 
 
-def map_product(trading_currency, buying_currency):
-    return trading_currency + buying_currency
-
-
 def map_currency(currency):
+    if currency == "USDT":
+        c = "UST"
+    elif currency == "TUSD":
+        c = "TSD"
+    else:
+        c = currency
     return currency
+
+def map_product(trading_currency, buying_currency):
+    return map_currency(trading_currency) + map_currency(buying_currency)
 
 
 class BfxTradeClient(TradeClient):
