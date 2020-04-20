@@ -1,5 +1,6 @@
 import argparse
-from cryptrade import ParameterError
+from cryptrade.exceptions import ParameterError
+
 
 class TradeParameters:
     def __init__(self):

@@ -1,10 +1,15 @@
 from binance.client import Client as BinClient
-from cryptrade import *
+
+from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+
 import sys
 import time
 
-# global binance constants
-TRANSACTION_FEE = 0.001  # transaction fee (percentage)
+# binance fees (percentage)
+# bitfinex fees (percentage)
+MAKER_FEE = 0.001
+TAKER_FEE = 0.001
 
 
 def map_product(trading_currency, buying_currency):
@@ -12,6 +17,10 @@ def map_product(trading_currency, buying_currency):
 
 
 def map_currency(currency):
+    return currency
+
+
+def reverse_map_currency(currency):
     return currency
 
 
@@ -53,6 +62,10 @@ class BinProduct(Product):
 
 
 class BinTicker(Ticker):
+    def __init__(self, auth_client, product):
+        super().__init__(auth_client, product)
+        self._name = "Binance"
+
     def update(self):
         try:
             product_ticker = self._auth_client.client.get_ticker(symbol=self._product.prod_id)
@@ -64,11 +77,6 @@ class BinTicker(Ticker):
         except Exception:
             # ignore exceptions
             pass
-
-    async def start(self):
-        while True:
-            self.update()
-            yield self
 
 
 class BinOrder(Order):
@@ -142,28 +150,25 @@ class BinOrder(Order):
 
 
 class BinAccount(Account):
+    def __init__(self, auth_client):
+        super().__init__(auth_client)
+        self._name = "Binance"
+
     def update(self):
         try:
-            asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.buying_currency))
-            if asset is not None:
-                self._bc_amount = float(asset["free"])
-            else:
-                self._bc_amount = 0.0
-
-            asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.trading_currency))
-            if asset is not None:
-                self._tc_amount = float(asset["free"])
-            else:
-                self._tc_amount = 0.0
+            account = self._auth_client.client.get_account()
+            self._balance.clear()
+            if "balances" in account:
+                for balance in account["balances"]:
+                    c = reverse_map_currency(balance["asset"].upper())
+                    amount = float(balance["free"]) + float(balance["locked"])
+                    if amount > 0:
+                        self._balance[c] = amount
+                self._timestamp = time.time()
 
         except Exception:
             # ignore exceptions
             pass
-
-    async def start(self):
-        while True:
-            self.update()
-            yield self
 
 
 class BinApiCreator(ApiCreator):
@@ -179,8 +184,11 @@ class BinApiCreator(ApiCreator):
     def create_order(self, auth_client, product, order_type, price, amount):
         return BinOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client, product):
-        return BinAccount(auth_client, product)
+    def create_account(self, auth_client):
+        return BinAccount(auth_client)
 
-    def create_transaction_monitor(self, name):
-        return TransactionMonitor(name, TRANSACTION_FEE)
+    def maker_fee(self):
+        return MAKER_FEE
+
+    def taker_fee(self):
+        return TAKER_FEE

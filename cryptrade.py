@@ -1,11 +1,8 @@
 #!/usr/bin/python3.7
-from cryptrade import coinbase
-from cryptrade import binance
-from cryptrade import kraken
-from cryptrade import bitfinex
-from cryptrade import logging
+from cryptrade import coinbase, binance, kraken, bitfinex
+from cryptrade import logging, TransactionMonitor
 from cryptrade.parameters import CommandLine
-from cryptrade import ParameterError
+from cryptrade.exceptions import ParameterError
 
 import time
 import json
@@ -31,12 +28,13 @@ if parameters.exchange in APIs:
 else:
     raise ParameterError("exchange-name unknown or unsupported")
 
-trade_client = api_factory.create_trade_client(credentials)
-trade_product = api_factory.create_product(trade_client, parameters.trading_currency, parameters.buying_currency)
-ticker = api_factory.create_ticker(trade_client, trade_product)
-account = api_factory.create_account(trade_client, trade_product)
-buying = api_factory.create_transaction_monitor("buy")
-selling = api_factory.create_transaction_monitor("sell")
+client = api_factory.create_trade_client(credentials)
+product = api_factory.create_product(client, parameters.trading_currency, parameters.buying_currency)
+ticker = api_factory.create_ticker(client, product)
+account = api_factory.create_account(client)
+
+buying = TransactionMonitor("buy", api_factory.maker_fee())
+selling = TransactionMonitor("sell", api_factory.maker_fee())
 
 buy_units = parameters.basic_units
 sell_units = parameters.basic_units
@@ -53,14 +51,14 @@ while trading:
 
     # make buy order
     buy_price = min(parameters.high_price, ticker.bid * (1 - parameters.delta))
-    buy_amount = min(buy_units * parameters.basic_amount, account.buying_amount / buy_price)
-    buy_order = api_factory.create_order(trade_client, trade_product, "buy", buy_price, buy_amount)
+    buy_amount = min(buy_units * parameters.basic_amount, account.balance[parameters.buying_currency] / buy_price)
+    buy_order = api_factory.create_order(client, product, "buy", buy_price, buy_amount)
     logger.log(logging.DETAILED, f"{buy_order}")
 
     # make sales order
     sell_price = max(parameters.low_price, ticker.ask * (1 + parameters.delta))
-    sell_amount = min(sell_units * parameters.basic_amount, account.trading_amount)
-    sell_order = api_factory.create_order(trade_client, trade_product, "sell", sell_price, sell_amount)
+    sell_amount = min(sell_units * parameters.basic_amount, account.balance[parameters.trading_currency])
+    sell_order = api_factory.create_order(client, product, "sell", sell_price, sell_amount)
     logger.log(logging.DETAILED, f"{sell_order}")
 
     # allow 1 failed order when empty orders are allowed

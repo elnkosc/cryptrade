@@ -1,95 +1,122 @@
 import krakenex
-from cryptrade import *
+
+from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+
 import sys
 import time
 
-# kraken constants
-MAKER_FEE = 0.0016  # transaction fee (percentage)
+# kraken fees (percentage)
+MAKER_FEE = 0.0016
 TAKER_FEE = 0.0026
+
+product_map = {
+    "ADABTC": "ADAXBT",
+    "ALGOBTC": "ALGOXBT",
+    "BATBTC": "BATXBT",
+    "BCHBTC": "BCHXBT",
+    "DASHBTC": "DASHXBT",
+    "EOSBTC": "EOSXBT",
+    "GNOBTC": "GNOXBT",
+    "ICXBTC": "ICXXBT",
+    "LINKBTC": "LINKXBT",
+    "LSKBTC": "LSKXBT",
+    "NANOBTC": "NANOXBT",
+    "OMGBTC": "OMGXBT",
+    "PAXGBTC": "PAXGXBT",
+    "QTUMBTC": "QTUMXBT",
+    "SCBTC": "SCXBT",
+    "TRXBTC": "TRXXBT",
+    "USDTUSD": "USDTZUSD",
+    "WAVESBTC": "WAVESXBT",
+    "BTCCHF": "XBTCHF",
+    "BTCDAI": "XBTDAI",
+    "BTCUSDC": "XBTUSDC",
+    "BTCUSDT": "XBTUSDT",
+    "ETCETH": "XETCXETH",
+    "ETCBTC": "XETCXXBT",
+    "ETCEUR": "XETCZEUR",
+    "ETCUSD": "XETCZUSD",
+    "ETHBTC": "XETHXXBT",
+    "ETHBTC.d": "XETHXXBT.d",
+    "ETHCAD": "XETHZCAD",
+    "ETHCAD.d": "XETHZCAD.d",
+    "ETHEUR": "XETHZEUR",
+    "ETHEUR.d": "XETHZEUR.d",
+    "ETHGBP": "XETHZGBP",
+    "ETHGBP.d": "XETHZGBP.d",
+    "ETHJPY": "XETHZJPY",
+    "ETHJPY.d": "XETHZJPY.d",
+    "ETHUSD": "XETHZUSD",
+    "ETHUSD.d": "XETHZUSD.d",
+    "LTCBTC": "XLTCXXBT",
+    "LTCEUR": "XLTCZEUR",
+    "LTCUSD": "XLTCZUSD",
+    "MLNETH": "XMLNXETH",
+    "MLNBTC": "XMLNXXBT",
+    "MLNEUR": "XMLNZEUR",
+    "MLNUSD": "XMLNZUSD",
+    "REPETH": "XREPXETH",
+    "REPBTC": "XREPXXBT",
+    "REPEUR": "XREPZEUR",
+    "REPUSD": "XREPZUSD",
+    "XTZBTC": "XTZXBT",
+    "BTCCAD": "XXBTZCAD",
+    "BTCCAD.d": "XXBTZCAD.d",
+    "BTCEUR": "XXBTZEUR",
+    "BTCEUR.d": "XXBTZEUR.d",
+    "BTCGBP": "XXBTZGBP",
+    "BTCGBP.d": "XXBTZGBP.d",
+    "BTCJPY": "XXBTZJPY",
+    "BTCJPY.d": "XXBTZJPY.d",
+    "BTCUSD": "XXBTZUSD",
+    "BTCUSD.d": "XXBTZUSD.d",
+    "XDGBTC": "XXDGXXBT",
+    "XLMBTC": "XXLMXXBT",
+    "XLMEUR": "XXLMZEUR",
+    "XLMUSD": "XXLMZUSD",
+    "XMRBTC": "XXMRXXBT",
+    "XMREUR": "XXMRZEUR",
+    "XMRUSD": "XXMRZUSD",
+    "XRPBTC": "XXRPXXBT",
+    "XRPCAD": "XXRPZCAD",
+    "XRPEUR": "XXRPZEUR",
+    "XRPJPY": "XXRPZJPY",
+    "XRPUSD": "XXRPZUSD",
+    "ZECBTC": "XZECXXBT",
+    "ZECEUR": "XZECZEUR",
+    "ZECUSD": "XZECZUSD",
+    "EURUSD": "ZEURZUSD",
+    "GBPUSD": "ZGBPZUSD",
+    "USDCAD": "ZUSDZCAD",
+    "USDJPY": "ZUSDZJPY"}
+
+currency_map = {
+    "BTC": "XXBT",
+    "ETH": "XETH",
+    "ETC": "XETC",
+    "LTC": "XLTC",
+    "EUR": "ZEUR",
+    "USD": "ZUSD",
+    "XRP": "XXRP",
+    "KRW": "ZKRW",
+    "JPY": "ZJPY",
+    "GBP": "ZGBP",
+    "CAD": "ZCAD",
+    "ZEC": "XZEC",
+    "XVN": "XXVN",
+    "XTZ": "XXTZ",
+    "XMR": "XXMR",
+    "XLM": "XXLM",
+    "XDG": "XXDG",
+    "REP": "XREP",
+    "NMC": "XNMC",
+    "MLN": "XMLN",
+    "ICN": "XICN",
+    "DAO": "XDAO"}
 
 
 def map_product(trading_currency, buying_currency):
-    product_map = {
-        "ADABTC": "ADAXBT",
-        "ALGOBTC": "ALGOXBT",
-        "BATBTC": "BATXBT",
-        "BCHBTC": "BCHXBT",
-        "DASHBTC": "DASHXBT",
-        "EOSBTC": "EOSXBT",
-        "GNOBTC": "GNOXBT",
-        "ICXBTC": "ICXXBT",
-        "LINKBTC": "LINKXBT",
-        "LSKBTC": "LSKXBT",
-        "NANOBTC": "NANOXBT",
-        "OMGBTC": "OMGXBT",
-        "PAXGBTC": "PAXGXBT",
-        "QTUMBTC": "QTUMXBT",
-        "SCBTC": "SCXBT",
-        "TRXBTC": "TRXXBT",
-        "USDTUSD": "USDTZUSD",
-        "WAVESBTC": "WAVESXBT",
-        "BTCCHF": "XBTCHF",
-        "BTCDAI": "XBTDAI",
-        "BTCUSDC": "XBTUSDC",
-        "BTCUSDT": "XBTUSDT",
-        "ETCETH": "XETCXETH",
-        "ETCBTC": "XETCXXBT",
-        "ETCEUR": "XETCZEUR",
-        "ETCUSD": "XETCZUSD",
-        "ETHBTC": "XETHXXBT",
-        "ETHBTC.d": "XETHXXBT.d",
-        "ETHCAD": "XETHZCAD",
-        "ETHCAD.d": "XETHZCAD.d",
-        "ETHEUR": "XETHZEUR",
-        "ETHEUR.d": "XETHZEUR.d",
-        "ETHGBP": "XETHZGBP",
-        "ETHGBP.d": "XETHZGBP.d",
-        "ETHJPY": "XETHZJPY",
-        "ETHJPY.d": "XETHZJPY.d",
-        "ETHUSD": "XETHZUSD",
-        "ETHUSD.d": "XETHZUSD.d",
-        "LTCBTC": "XLTCXXBT",
-        "LTCEUR": "XLTCZEUR",
-        "LTCUSD": "XLTCZUSD",
-        "MLNETH": "XMLNXETH",
-        "MLNBTC": "XMLNXXBT",
-        "MLNEUR": "XMLNZEUR",
-        "MLNUSD": "XMLNZUSD",
-        "REPETH": "XREPXETH",
-        "REPBTC": "XREPXXBT",
-        "REPEUR": "XREPZEUR",
-        "REPUSD": "XREPZUSD",
-        "XTZBTC": "XTZXBT",
-        "BTCCAD": "XXBTZCAD",
-        "BTCCAD.d": "XXBTZCAD.d",
-        "BTCEUR": "XXBTZEUR",
-        "BTCEUR.d": "XXBTZEUR.d",
-        "BTCGBP": "XXBTZGBP",
-        "BTCGBP.d": "XXBTZGBP.d",
-        "BTCJPY": "XXBTZJPY",
-        "BTCJPY.d": "XXBTZJPY.d",
-        "BTCUSD": "XXBTZUSD",
-        "BTCUSD.d": "XXBTZUSD.d",
-        "XDGBTC": "XXDGXXBT",
-        "XLMBTC": "XXLMXXBT",
-        "XLMEUR": "XXLMZEUR",
-        "XLMUSD": "XXLMZUSD",
-        "XMRBTC": "XXMRXXBT",
-        "XMREUR": "XXMRZEUR",
-        "XMRUSD": "XXMRZUSD",
-        "XRPBTC": "XXRPXXBT",
-        "XRPCAD": "XXRPZCAD",
-        "XRPEUR": "XXRPZEUR",
-        "XRPJPY": "XXRPZJPY",
-        "XRPUSD": "XXRPZUSD",
-        "ZECBTC": "XZECXXBT",
-        "ZECEUR": "XZECZEUR",
-        "ZECUSD": "XZECZUSD",
-        "EURUSD": "ZEURZUSD",
-        "GBPUSD": "ZGBPZUSD",
-        "USDCAD": "ZUSDZCAD",
-        "USDJPY": "ZUSDZJPY"}
-
     prod_id = trading_currency + buying_currency
     if prod_id in product_map:
         return product_map[prod_id]
@@ -98,33 +125,15 @@ def map_product(trading_currency, buying_currency):
 
 
 def map_currency(currency):
-    currency_map = {
-        "BTC": "XXBT",
-        "ETH": "XETH",
-        "ETC": "XETC",
-        "LTC": "XLTC",
-        "EUR": "ZEUR",
-        "USD": "ZUSD",
-        "XRP": "XXRP",
-        "KRW": "ZKRW",
-        "JPY": "ZJPY",
-        "GBP": "ZGBP",
-        "CAD": "ZCAD",
-        "ZEC": "XZEC",
-        "XVN": "XXVN",
-        "XTZ": "XXTZ",
-        "XMR": "XXMR",
-        "XLM": "XXLM",
-        "XDG": "XXDG",
-        "REP": "XREP",
-        "NMC": "XNMC",
-        "MLN": "XMLN",
-        "ÏCN": "XICN",
-        "DAO": "XDAO"
-    }
-
     if currency in currency_map:
         return currency_map[currency]
+    else:
+        return currency
+
+
+def reverse_map_currency(currency):
+    if currency in currency_map.values():
+        return next(key for key, value in currency_map.items() if value == currency)
     else:
         return currency
 
@@ -171,6 +180,10 @@ class KrakenProduct(Product):
 
 
 class KrakenTicker(Ticker):
+    def __init__(self, auth_client, product):
+        super().__init__(auth_client, product)
+        self._name = "Kraken"
+
     def update(self):
         try:
             product_ticker = self._auth_client.client.query_public("Ticker", {"pair": f"{self._product.prod_id}"})
@@ -184,11 +197,6 @@ class KrakenTicker(Ticker):
         except Exception:
             # ignore exceptions
             pass
-
-    async def start(self):
-        while True:
-            self.update()
-            yield self
 
 
 class KrakenOrder(Order):
@@ -260,25 +268,25 @@ class KrakenOrder(Order):
 
 
 class KrakenAccount(Account):
+    def __init__(self, auth_client):
+        super().__init__(auth_client)
+        self._name = "Kraken"
+
     def update(self):
         try:
             account_info = self._auth_client.client.query_private("Balance")
 
             if "result" in account_info:
-                for k, v in account_info["result"].items():
-                    if k == map_currency(self._product.buying_currency):
-                        self._bc_amount = float(v)
-                    elif k == map_currency(self._product.trading_currency):
-                        self._tc_amount = float(v)
+                self._balance.clear()
+                for currency, balance in account_info["result"].items():
+                    c = reverse_map_currency(currency.upper())
+                    if float(balance) > 0:
+                        self._balance[c] = float(balance)
+                self._timestamp = time.time()
 
         except Exception:
             # ignore
             pass
-
-    async def start(self):
-        while True:
-            self.update()
-            yield self
 
 
 class KrakenApiCreator(ApiCreator):
@@ -294,8 +302,11 @@ class KrakenApiCreator(ApiCreator):
     def create_order(self, auth_client, product, order_type, price, amount):
         return KrakenOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client, product):
-        return KrakenAccount(auth_client, product)
+    def create_account(self, auth_client):
+        return KrakenAccount(auth_client)
 
-    def create_transaction_monitor(self, name):
-        return TransactionMonitor(name, MAKER_FEE)
+    def maker_fee(self):
+        return MAKER_FEE
+
+    def taker_fee(self):
+        return TAKER_FEE

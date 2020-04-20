@@ -1,10 +1,14 @@
 import cbpro
-from cryptrade import *
+
+from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+
 import sys
 import time
 
-# coinbase constants
-TRANSACTION_FEE = 0.005  # transaction fee (percentage)
+# coinbase fees (percentage)
+MAKER_FEE = 0.005
+TAKER_FEE = 0.005
 
 
 def map_product(trading_currency, buying_currency):
@@ -12,6 +16,10 @@ def map_product(trading_currency, buying_currency):
 
 
 def map_currency(currency):
+    return currency
+
+
+def reverse_map_currency(currency):
     return currency
 
 
@@ -54,6 +62,10 @@ class CBProduct(Product):
 
 
 class CBTicker(Ticker):
+    def __init__(self, auth_client, product):
+        super().__init__(auth_client, product)
+        self._name = "Coinbase Pro"
+
     def update(self):
         try:
             product_ticker = self._auth_client.client.get_product_ticker(self._product.prod_id)
@@ -67,11 +79,6 @@ class CBTicker(Ticker):
         except Exception:
             # ignore exceptions
             pass
-
-    async def start(self):
-        while True:
-            self.update()
-            yield self
 
 
 class CBOrder(Order):
@@ -141,22 +148,22 @@ class CBOrder(Order):
 
 
 class CBAccount(Account):
+    def __init__(self, auth_client):
+        super().__init__(auth_client)
+        self._name = "Coinbase Pro"
+
     def update(self):
         try:
+            self._balance.clear()
             for sub_account in self._auth_client.client.get_accounts():
-                if sub_account["currency"] == map_currency(self._product.buying_currency):
-                    self._bc_amount = float(sub_account["balance"])
-                elif sub_account["currency"] == map_currency(self._product.trading_currency):
-                    self._tc_amount = float(sub_account["balance"])
+                c = reverse_map_currency(sub_account["currency"].upper())
+                if float(sub_account["balance"]) > 0:
+                    self._balance[c] = float(sub_account["balance"])
+            self._timestamp = time.time()
 
         except Exception:
             # ignore
             pass
-
-    async def start(self):
-        while True:
-            self.update()
-            yield self
 
 
 class CBApiCreator(ApiCreator):
@@ -172,8 +179,11 @@ class CBApiCreator(ApiCreator):
     def create_order(self, auth_client, product, order_type, price, amount):
         return CBOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client, product):
-        return CBAccount(auth_client, product)
+    def create_account(self, auth_client):
+        return CBAccount(auth_client)
 
-    def create_transaction_monitor(self, name):
-        return TransactionMonitor(name, TRANSACTION_FEE)
+    def maker_fee(self):
+        return MAKER_FEE
+
+    def taker_fee(self):
+        return TAKER_FEE
