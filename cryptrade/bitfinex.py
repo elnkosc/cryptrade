@@ -1,13 +1,16 @@
 import bfxapi.client
 import bfxapi.models.notification
 from bfxapi.models.order import OrderType
-from cryptrade import *
+
+from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+
 import sys
 import time
 import asyncio
 
-# bitfinex constants
-MAKER_FEE = 0.001  # transaction fee (percentage)
+# bitfinex fees (percentage)
+MAKER_FEE = 0.001
 TAKER_FEE = 0.002
 
 
@@ -19,6 +22,17 @@ def map_currency(currency):
     else:
         c = currency
     return c
+
+
+def reverse_map_currency(currency):
+    if currency == "UST":
+        c = "USDT"
+    elif currency == "TSD":
+        c = "TUSD"
+    else:
+        c = currency
+    return c
+
 
 def map_product(trading_currency, buying_currency):
     return map_currency(trading_currency) + map_currency(buying_currency)
@@ -71,9 +85,13 @@ class BfxProduct(Product):
 
 
 class BfxTicker(Ticker):
-    def update(self):
+    def __init__(self, auth_client, product):
+        super().__init__(auth_client, product)
+        self._name = "Bitfinex"
+
+    async def async_update(self):
         try:
-            product_ticker = asyncio.run(self._auth_client.client["v2"].get_public_ticker("t" + self._product.prod_id))
+            product_ticker = await self._auth_client.client["v2"].get_public_ticker("t" + self._product.prod_id)
             self._bid = product_ticker[0]
             self._ask = product_ticker[2]
             self._price = product_ticker[6]
@@ -83,21 +101,14 @@ class BfxTicker(Ticker):
             # ignore exceptions
             pass
 
-    async def start(self):
+    def update(self):
+        asyncio.run(self.async_update())
+
+    async def produce(self, interval):
         while True:
-            # not possible to use update as get_public_ticker is async function that is called with async.run()
-            try:
-                product_ticker = await self._auth_client.client["v2"].get_public_ticker("t" + self._product.prod_id)
-                self._bid = product_ticker[0]
-                self._ask = product_ticker[2]
-                self._price = product_ticker[6]
-                self._timestamp = time.time()
-
-                yield self
-
-            except Exception:
-                # ignore exceptions
-                pass
+            await self.async_update()
+            await self.notify()
+            await asyncio.sleep(interval)
 
 
 class BfxOrder(Order):
@@ -140,7 +151,7 @@ class BfxOrder(Order):
         try:
             order_update = asyncio.run(self._auth_client.client["v2"].submit_update_order(self._order_id))
 
-            if order_update.is_sucess():
+            if order_update.is_success():
                 self._status = order_update.notify_info.status
                 self._filled_size = abs(order_update.notify_info.amount_filled)
                 self._executed_value = self._filled_size * self._price
@@ -168,33 +179,32 @@ class BfxOrder(Order):
 
 
 class BfxAccount(Account):
-    def update(self):
+    def __init__(self, auth_client):
+        super().__init__(auth_client)
+        self._name = "Bitfinex"
+
+    async def async_update(self):
         try:
-            account_info = asyncio.run(self._auth_client.client["v2"].get_wallets())
+            account_info = await self._auth_client.client["v2"].get_wallets()
+            self._balance.clear()
             for wallet in account_info:
-                if wallet.currency == map_currency(self._product.buying_currency):
-                    self._bc_amount = wallet.balance
-                elif wallet.currency == map_currency(self._product.trading_currency):
-                    self._tc_amount = wallet.balance
+                c = reverse_map_currency(wallet.currency.upper())
+                if wallet.balance > 0:
+                    self._balance[c] = wallet.balance
+            self._timestamp = time.time()
 
         except Exception:
             # ignore
             pass
 
-    async def start(self):
-        while True:
-            try:
-                account_info = await self._auth_client.client["v2"].get_wallets()
-                for wallet in account_info:
-                    if wallet.currency == map_currency(self._product.buying_currency):
-                        self._bc_amount = wallet.balance
-                    elif wallet.currency == map_currency(self._product.trading_currency):
-                        self._tc_amount = wallet.balance
-                yield self
+    def update(self):
+        asyncio.run(self.async_update())
 
-            except Exception:
-                # ignore
-                pass
+    async def produce(self, interval):
+        while True:
+            await self.async_update()
+            await self.notify()
+            await asyncio.sleep(interval)
 
 
 class BfxApiCreator(ApiCreator):
@@ -210,8 +220,11 @@ class BfxApiCreator(ApiCreator):
     def create_order(self, auth_client, product, order_type, price, amount):
         return BfxOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client, product):
-        return BfxAccount(auth_client, product)
+    def create_account(self, auth_client):
+        return BfxAccount(auth_client)
 
-    def create_transaction_monitor(self, name):
-        return TransactionMonitor(name, MAKER_FEE)
+    def maker_fee(self):
+        return MAKER_FEE
+
+    def taker_fee(self):
+        return TAKER_FEE
