@@ -51,13 +51,13 @@ while trading:
 
     # make buy order
     buy_price = min(parameters.high_price, ticker.bid * (1 - parameters.delta))
-    buy_amount = min(buy_units * parameters.basic_amount, account.balance[parameters.buying_currency] / buy_price)
+    buy_amount = min(buy_units * parameters.basic_amount, account.balance(parameters.buying_currency) / buy_price)
     buy_order = api_factory.create_order(client, product, "buy", buy_price, buy_amount)
     logger.log(logging.DETAILED, f"{buy_order}")
 
     # make sales order
     sell_price = max(parameters.low_price, ticker.ask * (1 + parameters.delta))
-    sell_amount = min(sell_units * parameters.basic_amount, account.balance[parameters.trading_currency])
+    sell_amount = min(sell_units * parameters.basic_amount, account.balance(parameters.trading_currency))
     sell_order = api_factory.create_order(client, product, "sell", sell_price, sell_amount)
     logger.log(logging.DETAILED, f"{sell_order}")
 

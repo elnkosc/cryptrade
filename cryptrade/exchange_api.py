@@ -209,9 +209,11 @@ class Account(Observerable):
             await self.notify()
             await asyncio.sleep(interval)
 
-    @property
-    def balance(self):
-        return self._balance
+    def balance(self, currency):
+        if currency in self._balance.keys():
+            return self._balance[currency]
+        else:
+            return 0
 
     def __str__(self):
         time_format = "%Y-%m-%d %H:%M:%S"
