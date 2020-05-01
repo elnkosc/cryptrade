@@ -9,12 +9,12 @@ import sys
 import time
 import asyncio
 
-# bitfinex fees (percentage)
-MAKER_FEE = 0.001
-TAKER_FEE = 0.002
+
+def map_product(trading_currency, buying_currency):
+    return map_to_exchange_currency(trading_currency) + map_to_exchange_currency(buying_currency)
 
 
-def map_currency(currency):
+def map_to_exchange_currency(currency):
     if currency == "USDT":
         c = "UST"
     elif currency == "TUSD":
@@ -24,7 +24,7 @@ def map_currency(currency):
     return c
 
 
-def reverse_map_currency(currency):
+def map_from_exchange_currency(currency):
     if currency == "UST":
         c = "USDT"
     elif currency == "TSD":
@@ -32,10 +32,6 @@ def reverse_map_currency(currency):
     else:
         c = currency
     return c
-
-
-def map_product(trading_currency, buying_currency):
-    return map_currency(trading_currency) + map_currency(buying_currency)
 
 
 class BfxTradeClient(TradeClient):
@@ -167,6 +163,9 @@ class BfxOrder(Order):
             self._status = "unknown"
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
+        if self._settled:
+            self._timestamp = time.time()
+
         return self._settled
 
     def cancel(self):
@@ -188,7 +187,7 @@ class BfxAccount(Account):
             account_info = await self._auth_client.client["v2"].get_wallets()
             self._balance.clear()
             for wallet in account_info:
-                c = reverse_map_currency(wallet.currency.upper())
+                c = map_from_exchange_currency(wallet.currency.upper())
                 if wallet.balance > 0:
                     self._balance[c] = wallet.balance
             self._timestamp = time.time()
@@ -208,23 +207,25 @@ class BfxAccount(Account):
 
 
 class BfxApiCreator(ApiCreator):
-    def create_trade_client(self, credentials):
+    _maker_fee = 0.001
+    _taker_fee = 0.002
+
+    @staticmethod
+    def create_trade_client(credentials):
         return BfxTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
         return BfxProduct(auth_client, trading_currency, buying_currency)
 
-    def create_ticker(self, auth_client, product):
+    @staticmethod
+    def create_ticker(auth_client, product):
         return BfxTicker(auth_client, product)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
         return BfxOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client):
+    @staticmethod
+    def create_account(auth_client):
         return BfxAccount(auth_client)
-
-    def maker_fee(self):
-        return MAKER_FEE
-
-    def taker_fee(self):
-        return TAKER_FEE

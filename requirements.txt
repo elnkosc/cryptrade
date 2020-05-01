@@ -1,4 +1,4 @@
-krakenex
+krakenex~=2.1.0
 attrs==19.3.0
 autobahn==20.3.1
 Automat==20.2.0
@@ -34,3 +34,6 @@ tzlocal==2.0.0
 urllib3==1.25.8
 websocket-client==0.40.0
 zope.interface==5.0.1
+
+setuptools~=40.8.0
+asyncio~=3.4.3

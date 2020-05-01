@@ -6,9 +6,6 @@ from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account,
 import sys
 import time
 
-# kraken fees (percentage)
-MAKER_FEE = 0.0016
-TAKER_FEE = 0.0026
 
 product_map = {
     "ADABTC": "ADAXBT",
@@ -124,14 +121,14 @@ def map_product(trading_currency, buying_currency):
         return prod_id
 
 
-def map_currency(currency):
+def map_to_exchange_currency(currency):
     if currency in currency_map:
         return currency_map[currency]
     else:
         return currency
 
 
-def reverse_map_currency(currency):
+def map_from_exchange_currency(currency):
     if currency in currency_map.values():
         return next(key for key, value in currency_map.items() if value == currency)
     else:
@@ -192,7 +189,7 @@ class KrakenTicker(Ticker):
                     self._bid = float(v["b"][0])
                     self._ask = float(v["a"][0])
                     self._price = float(v["c"][0])
-                    self._timestamp = time.time()
+                self._timestamp = time.time()
 
         except Exception:
             # ignore exceptions
@@ -256,6 +253,9 @@ class KrakenOrder(Order):
             self._status = "error"
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
+        if self._settled:
+            self._timestamp = time.time()
+
         return self._settled
 
     def cancel(self):
@@ -279,7 +279,7 @@ class KrakenAccount(Account):
             if "result" in account_info:
                 self._balance.clear()
                 for currency, balance in account_info["result"].items():
-                    c = reverse_map_currency(currency.upper())
+                    c = map_from_exchange_currency(currency.upper())
                     if float(balance) > 0:
                         self._balance[c] = float(balance)
                 self._timestamp = time.time()
@@ -290,23 +290,25 @@ class KrakenAccount(Account):
 
 
 class KrakenApiCreator(ApiCreator):
-    def create_trade_client(self, credentials):
+    _maker_fee = 0.0016
+    _taker_fee = 0.0026
+
+    @staticmethod
+    def create_trade_client(credentials):
         return KrakenTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
         return KrakenProduct(auth_client, trading_currency, buying_currency)
 
-    def create_ticker(self, auth_client, product):
+    @staticmethod
+    def create_ticker(auth_client, product):
         return KrakenTicker(auth_client, product)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
         return KrakenOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client):
+    @staticmethod
+    def create_account(auth_client):
         return KrakenAccount(auth_client)
-
-    def maker_fee(self):
-        return MAKER_FEE
-
-    def taker_fee(self):
-        return TAKER_FEE

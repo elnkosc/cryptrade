@@ -6,20 +6,16 @@ from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account,
 import sys
 import time
 
-# coinbase fees (percentage)
-MAKER_FEE = 0.005
-TAKER_FEE = 0.005
-
 
 def map_product(trading_currency, buying_currency):
     return trading_currency + "-" + buying_currency
 
 
-def map_currency(currency):
+def map_to_exchange_currency(currency):
     return currency
 
 
-def reverse_map_currency(currency):
+def map_from_exchange_currency(currency):
     return currency
 
 
@@ -136,6 +132,9 @@ class CBOrder(Order):
             self._status = "error"
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
+        if self._settled:
+            self._timestamp = time.time()
+
         return self._settled
 
     def cancel(self):
@@ -156,7 +155,7 @@ class CBAccount(Account):
         try:
             self._balance.clear()
             for sub_account in self._auth_client.client.get_accounts():
-                c = reverse_map_currency(sub_account["currency"].upper())
+                c = map_from_exchange_currency(sub_account["currency"].upper())
                 if float(sub_account["balance"]) > 0:
                     self._balance[c] = float(sub_account["balance"])
             self._timestamp = time.time()
@@ -167,23 +166,25 @@ class CBAccount(Account):
 
 
 class CBApiCreator(ApiCreator):
-    def create_trade_client(self, credentials):
+    _maker_fee = 0.005
+    _taker_fee = 0.005
+
+    @staticmethod
+    def create_trade_client(credentials):
         return CBTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
         return CBProduct(auth_client, trading_currency, buying_currency)
 
-    def create_ticker(self, auth_client, product):
+    @staticmethod
+    def create_ticker(auth_client, product):
         return CBTicker(auth_client, product)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
         return CBOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client):
+    @staticmethod
+    def create_account(auth_client):
         return CBAccount(auth_client)
-
-    def maker_fee(self):
-        return MAKER_FEE
-
-    def taker_fee(self):
-        return TAKER_FEE

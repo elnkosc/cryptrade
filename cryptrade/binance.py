@@ -6,21 +6,16 @@ from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account,
 import sys
 import time
 
-# binance fees (percentage)
-# bitfinex fees (percentage)
-MAKER_FEE = 0.001
-TAKER_FEE = 0.001
-
 
 def map_product(trading_currency, buying_currency):
     return trading_currency + buying_currency
 
 
-def map_currency(currency):
+def map_to_exchange_currency(currency):
     return currency
 
 
-def reverse_map_currency(currency):
+def map_from_exchange_currency(currency):
     return currency
 
 
@@ -138,6 +133,9 @@ class BinOrder(Order):
             self._status = "error"
             self._message = f"order update exception: {sys.exc_info()[1]}"
 
+        if self._settled:
+            self._timestamp = time.time()
+
         return self._settled
 
     def cancel(self):
@@ -160,11 +158,11 @@ class BinAccount(Account):
             self._balance.clear()
             if "balances" in account:
                 for balance in account["balances"]:
-                    c = reverse_map_currency(balance["asset"].upper())
+                    c = map_from_exchange_currency(balance["asset"].upper())
                     amount = float(balance["free"]) + float(balance["locked"])
                     if amount > 0:
                         self._balance[c] = amount
-                self._timestamp = time.time()
+            self._timestamp = time.time()
 
         except Exception:
             # ignore exceptions
@@ -172,23 +170,25 @@ class BinAccount(Account):
 
 
 class BinApiCreator(ApiCreator):
-    def create_trade_client(self, credentials):
+    _maker_fee = 0.001
+    _taker_fee = 0.002
+
+    @staticmethod
+    def create_trade_client(credentials):
         return BinTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
         return BinProduct(auth_client, trading_currency, buying_currency)
 
-    def create_ticker(self, auth_client, product):
+    @staticmethod
+    def create_ticker(auth_client, product):
         return BinTicker(auth_client, product)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
         return BinOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client):
+    @staticmethod
+    def create_account(auth_client):
         return BinAccount(auth_client)
-
-    def maker_fee(self):
-        return MAKER_FEE
-
-    def taker_fee(self):
-        return TAKER_FEE
