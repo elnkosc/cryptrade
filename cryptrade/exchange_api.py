@@ -2,7 +2,7 @@ import asyncio
 import time
 from math import trunc
 
-from cryptrade import Observerable
+from cryptrade.observers import Observable
 
 
 def trunc_dec(number, digits):
@@ -24,7 +24,7 @@ class Product:
         self._auth_client = auth_client
         self._trading_currency = trading_currency
         self._buying_currency = buying_currency
-        self._prod_id = ""
+        self._prod_id = trading_currency + buying_currency
         self._min_order_value = 0.0
         self._min_amount = 0.0
         self._min_price = 0.0
@@ -75,7 +75,7 @@ class Product:
         return f"{self._trading_currency}-{self._buying_currency}"
 
 
-class Ticker(Observerable):
+class Ticker(Observable):
     def __init__(self, auth_client, product):
         super().__init__()
         self._auth_client = auth_client
@@ -116,6 +116,10 @@ class Ticker(Observerable):
     def price(self):
         return self._price
 
+    @property
+    def timestamp(self):
+        return self._timestamp
+
     def __str__(self):
         time_format = "%Y-%m-%d %H:%M:%S"
         return (f"Ticker: {self._name}, {self._product}\n"
@@ -126,8 +130,9 @@ class Ticker(Observerable):
                 f"Spread: {self.spread:8.4f}\n")
 
 
-class Order:
+class Order(Observable):
     def __init__(self, auth_client, product, order_type, price, amount):
+        super().__init__()
         self._auth_client = auth_client
         self._product = product
         self._order_type = order_type
@@ -140,6 +145,7 @@ class Order:
         self._executed_value = 0.0
         self._settled = False
         self._message = ""
+        self._timestamp = None
 
     def status(self):
         return self._settled
@@ -149,12 +155,20 @@ class Order:
         return self._order_id
 
     @property
+    def order_type(self):
+        return self._order_type
+
+    @property
     def filled_size(self):
         return self._filled_size
 
     @property
     def executed_value(self):
         return self._executed_value
+
+    @property
+    def price(self):
+        return self._price
 
     @property
     def error(self):
@@ -167,6 +181,16 @@ class Order:
     @property
     def message(self):
         return self._message
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    async def produce(self, interval):
+        while True:
+            if self.status():
+                await self.notify()
+            await asyncio.sleep(interval)
 
     def cancel(self):
         self._status = "canceled"
@@ -187,13 +211,27 @@ class Order:
                 f"Message       : {self._message}\n")
 
 
-class Account(Observerable):
+class Account(Observable):
     def __init__(self, auth_client):
         super().__init__()
         self._auth_client = auth_client
         self._balance = {}
         self._timestamp = None
         self._name = ""
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def balance(self):
+        return self._balance
+
+    def balance_string(self):
+        s = ""
+        for currency, balance in self._balance.items():
+            s += f"{currency} : {balance:8.4f}\n"
+        return s
 
     def update(self):
         self._timestamp = time.time()
@@ -209,7 +247,7 @@ class Account(Observerable):
             await self.notify()
             await asyncio.sleep(interval)
 
-    def balance(self, currency):
+    def currency_balance(self, currency):
         if currency in self._balance.keys():
             return self._balance[currency]
         else:
@@ -217,30 +255,39 @@ class Account(Observerable):
 
     def __str__(self):
         time_format = "%Y-%m-%d %H:%M:%S"
-        s = f"Account: {self._name}\nTime: {time.strftime(time_format, time.localtime(self._timestamp))}\n"
-        for currency, balance in self._balance.items():
-            s += f"{currency} : {balance:8.4f}\n"
-        return s
+        return (f"Account: {self._name}\n"
+                f"Time   : {time.strftime(time_format, time.localtime(self._timestamp))}\n"
+                f"{self.balance_string()}")
 
 
 class ApiCreator:
-    def create_trade_client(self, credentials):
-        pass
+    _maker_fee = 0
+    _taker_fee = 0
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
-        pass
+    @staticmethod
+    def create_trade_client(credentials):
+        return TradeClient()
 
-    def create_ticker(self, auth_client, product):
-        pass
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
+        return Product(auth_client, trading_currency, buying_currency)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
-        pass
+    @staticmethod
+    def create_ticker(auth_client, product):
+        return Ticker(auth_client, product)
 
-    def create_account(self, auth_client):
-        pass
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
+        return Order(auth_client, product, order_type, product, amount)
 
-    def maker_fee(self):
-        pass
+    @staticmethod
+    def create_account(auth_client):
+        return Account(auth_client)
 
-    def taker_fee(self):
-        pass
+    @classmethod
+    def maker_fee(cls):
+        return cls._maker_fee
+
+    @classmethod
+    def taker_fee(cls):
+        return cls._taker_fee

@@ -1,30 +1,39 @@
 from pushbullet import PushBullet
 
 # Set debug levels
-OFF = 0
-BASIC = 1
-DETAILED = 2
+DEBUG_OFF = 0
+DEBUG_BASIC = 1
+DEBUG_DETAILED = 2
 
 
-class Logger:
-    def __init__(self, level):
+class LoggerSingleton(type):
+    _instance = None
+
+    def __call__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
+
+
+class Logger(metaclass=LoggerSingleton):
+    def __init__(self, level: int):
         self._level = level
 
-    def log(self, level, debug_info):
+    def log(self, level: int, debug_info: str):
         if level <= self._level:
             print(debug_info)
 
-    def alert(self, level, alert_title, alert_msg):
+    def alert(self, level: int, alert_title: str, alert_msg: str):
         self.log(level, alert_title)
         self.log(level, alert_msg)
 
 
 class FileLogger(Logger):
-    def __init__(self, level, fname):
+    def __init__(self, level: int, filename: str):
         super().__init__(level)
-        self._fp = open(fname, "w+")
+        self._fp = open(filename, "w+")
 
-    def log(self, level, debug_info):
+    def log(self, level: int, debug_info: str):
         if level <= self._level:
             self._fp.write(f"{debug_info}\n")
 
@@ -33,13 +42,13 @@ class FileLogger(Logger):
 
 
 class PushBulletLogger(Logger):
-    def __init__(self, level, api_key):
+    def __init__(self, level: int, api_key: str):
         super().__init__(level)
         self._pb = PushBullet(api_key)
 
-    def alert(self, level, alert_title, alert_msg):
+    def alert(self, level: int, alert_title: str, alert_msg: str):
         super().alert(level, alert_title, alert_msg)
         try:
-            self._pb.push_note("cryptrade Alert", alert_title)
-        except:
+            self._pb.push_note("Cryptrade Alert: ", alert_title)
+        except Exception:
             self.log(level, "PushBullet notification failed!")
