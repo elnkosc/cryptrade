@@ -1,14 +1,21 @@
 from binance.client import Client as BinClient
-from trade import *
-import sys
 
-# global binance constants
-TRANSACTION_FEE = 0.001  # transaction fee (percentage)
+from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+
+import sys
+from datetime import datetime
+
 
 def map_product(trading_currency, buying_currency):
     return trading_currency + buying_currency
 
-def map_currency(currency):
+
+def map_to_exchange_currency(currency):
+    return currency
+
+
+def map_from_exchange_currency(currency):
     return currency
 
 
@@ -50,12 +57,17 @@ class BinProduct(Product):
 
 
 class BinTicker(Ticker):
+    def __init__(self, auth_client, product):
+        super().__init__(auth_client, product)
+        self._name = "Binance"
+
     def update(self):
         try:
             product_ticker = self._auth_client.client.get_ticker(symbol=self._product.prod_id)
             self._bid = float(product_ticker["bidPrice"])
             self._ask = float(product_ticker["askPrice"])
             self._price = float(product_ticker["lastPrice"])
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions
@@ -121,48 +133,62 @@ class BinOrder(Order):
             self._status = "error"
             self._message = f"order update exception: {sys.exc_info()[1]}"
 
+        if self._settled:
+            self._timestamp = datetime.now().replace(microsecond=0)
+
         return self._settled
 
     def cancel(self):
-        try:
-            super().cancel()
-            self._auth_client.client.cancel_order(symbol=self._product.prod_id, orderId=self._order_id)
-        except Exception:
-            self._message = "Cancellation failed"
+        if not self._settled:
+            try:
+                super().cancel()
+                self._auth_client.client.cancel_order(symbol=self._product.prod_id, orderId=self._order_id)
+            except Exception:
+                self._message = "Cancellation failed"
 
 
 class BinAccount(Account):
-    def update(self, exchange_rate):
-        asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.buying_currency))
-        if asset is not None:
-            self._bc_amount = float(asset["free"])
-        else:
-            self._bc_amount = 0.0
+    def __init__(self, auth_client):
+        super().__init__(auth_client)
+        self._name = "Binance"
 
-        asset = self._auth_client.client.get_asset_balance(asset=map_currency(self._product.trading_currency))
-        if asset is not None:
-            self._tc_amount = float(asset["free"])
-        else:
-            self._tc_amount = 0.0
+    def update(self):
+        try:
+            account = self._auth_client.client.get_account()
+            self._balance.clear()
+            if "balances" in account:
+                for balance in account["balances"]:
+                    c = map_from_exchange_currency(balance["asset"].upper())
+                    amount = float(balance["free"]) + float(balance["locked"])
+                    if amount > 0:
+                        self._balance[c] = amount
+            self._timestamp = datetime.now().replace(microsecond=0)
 
-        self._value = self._tc_amount * exchange_rate
+        except Exception:
+            # ignore exceptions
+            pass
 
 
 class BinApiCreator(ApiCreator):
-    def create_trade_client(self, credentials):
+    _maker_fee = 0.001
+    _taker_fee = 0.002
+
+    @staticmethod
+    def create_trade_client(credentials):
         return BinTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
         return BinProduct(auth_client, trading_currency, buying_currency)
 
-    def create_ticker(self, auth_client, product):
+    @staticmethod
+    def create_ticker(auth_client, product):
         return BinTicker(auth_client, product)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
         return BinOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client, product):
-        return BinAccount(auth_client, product)
-
-    def create_transaction_monitor(self, name):
-        return TransactionMonitor(name, TRANSACTION_FEE)
+    @staticmethod
+    def create_account(auth_client):
+        return BinAccount(auth_client)

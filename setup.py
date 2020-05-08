@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='cryptrade',
     version='0.1',
-    packages=['trade'],
+    packages=['cryptrade'],
     url='',
     license='',
     author='Koen',
