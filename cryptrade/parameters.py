@@ -7,7 +7,6 @@ class TradeParameters:
         self._logging_level = 1
         self._currency = "BTC"
         self._exchange = "coinbase"
-        self._empty_order = False
         self._low_price = 0
         self._high_price = 1000000
         self._delta = 1.5
@@ -30,10 +29,6 @@ class TradeParameters:
     @property
     def buying_currency(self):
         return self._buying_currency
-
-    @property
-    def empty_order(self):
-        return self._empty_order
 
     @property
     def low_price(self):
@@ -75,7 +70,7 @@ class CommandLine(TradeParameters):
         parser.add_argument("currency", type=str, action="store", metavar="currency",
                             help="Currency to cryptrade in (btc, eth, xrp, ltc, bch).")
 
-        # optional paramaters
+        # optional parameters
         parser.add_argument("-c", "--currency", dest="buying_currency", type=str, default="eur", action="store",
                             help="(Crypto) currency to use for buying.")
         parser.add_argument("-d", "--delta", dest="trade_delta", type=float, default=1.5, action="store",
@@ -83,40 +78,18 @@ class CommandLine(TradeParameters):
                                  "before making a cryptrade (accepts fractional numbers).")
         parser.add_argument("-a", "--amount", dest="trade_amount", type=float, default=0.001, action="store",
                             help="Initial amount to start trading with (btc>=0.001, eth>=0.01, xrp>=1, ltc=0.1).")
-        parser.add_argument("-u", "--units", dest="trade_units", type=int, default=1, action="store",
-                            help="Initial amount of units to start trading with (> 0).")
         parser.add_argument("-l", "--logging", dest="logging_level", type=int, default=1,
                             action="store", choices=[1, 2, 3],
                             help="Logging level 0=Off, 1=Basic, 2=Detailed.")
-        parser.add_argument("-e", "--empty", dest="empty_order", action="store_true",
-                            help="When specified, allow trading when buying or sales order cannot be made due to "
-                                 "insufficient funds.")
-        parser.add_argument("-ph", "--high_price", dest="high_price", type=float, default=100000.0, action="store",
-                            help="Do not buy higher than this price")
-        parser.add_argument("-pl", "--low_price", dest="low_price", type=float, default=0.0, action="store",
-                            help="Do not sell lower than this price")
 
         args = parser.parse_args()
 
         self._logging_level = args.logging_level
         self._currency = args.currency.upper()
         self._exchange = args.exchange.lower()
-        self._empty_order = args.empty_order
-        self._low_price = args.low_price
-        self._high_price = args.high_price
         self._delta = args.trade_delta / 100
         self._basic_amount = args.trade_amount
-        self._basic_units = args.trade_units
         self._buying_currency = args.buying_currency.upper()
-
-        if self._low_price < 0:
-            raise ParameterError("low_price, minimum price cannot be negative")
-
-        if self._high_price < self._low_price:
-            raise ParameterError("high_price, should be higher than low_price")
 
         if self._delta <= 0 or self._delta >= 1:
             raise ParameterError("cryptrade, cryptrade-delta should be between 0 & 100%")
-
-        if self._basic_units <= 0:
-            raise ParameterError("units, should be higher than 0")
