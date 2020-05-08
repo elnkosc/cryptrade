@@ -1,15 +1,21 @@
 import cbpro
-from trade import *
-import sys
 
-# coinbase constants
-TRANSACTION_FEE = 0.005  # transaction fee (percentage)
+from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+
+import sys
+from datetime import datetime
 
 
 def map_product(trading_currency, buying_currency):
     return trading_currency + "-" + buying_currency
 
-def map_currency(currency):
+
+def map_to_exchange_currency(currency):
+    return currency
+
+
+def map_from_exchange_currency(currency):
     return currency
 
 
@@ -52,17 +58,24 @@ class CBProduct(Product):
 
 
 class CBTicker(Ticker):
+    def __init__(self, auth_client, product):
+        super().__init__(auth_client, product)
+        self._name = "Coinbase Pro"
+
     def update(self):
         try:
             product_ticker = self._auth_client.client.get_product_ticker(self._product.prod_id)
+
             if "trade_id" in product_ticker:
                 self._bid = float(product_ticker["bid"])
                 self._ask = float(product_ticker["ask"])
                 self._price = float(product_ticker["price"])
+                self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions
             pass
+
 
 class CBOrder(Order):
     def __init__(self, auth_client, product, order_type, price, amount):
@@ -119,41 +132,59 @@ class CBOrder(Order):
             self._status = "error"
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
+        if self._settled:
+            self._timestamp = datetime.now().replace(microsecond=0)
+
         return self._settled
 
     def cancel(self):
-        try:
-            super().cancel()
-            self._auth_client.client.cancel_order(self.order_id)
-        except Exception:
-            self._message = "Cancellation failed"
+        if not self._settled:
+            try:
+                super().cancel()
+                self._auth_client.client.cancel_order(self.order_id)
+            except Exception:
+                self._message = "Cancellation failed"
 
 
 class CBAccount(Account):
-    def update(self, exchange_rate):
-        for sub_account in self._auth_client.client.get_accounts():
-            if sub_account["currency"] == map_currency(self._product.buying_currency):
-                self._bc_amount = float(sub_account["balance"])
-            elif sub_account["currency"] == map_currency(self._product.trading_currency):
-                self._tc_amount = float(sub_account["balance"])
-                self._value = self._tc_amount * exchange_rate
+    def __init__(self, auth_client):
+        super().__init__(auth_client)
+        self._name = "Coinbase Pro"
+
+    def update(self):
+        try:
+            self._balance.clear()
+            for sub_account in self._auth_client.client.get_accounts():
+                c = map_from_exchange_currency(sub_account["currency"].upper())
+                if float(sub_account["balance"]) > 0:
+                    self._balance[c] = float(sub_account["balance"])
+            self._timestamp = datetime.now().replace(microsecond=0)
+
+        except Exception:
+            # ignore
+            pass
 
 
 class CBApiCreator(ApiCreator):
-    def create_trade_client(self, credentials):
+    _maker_fee = 0.005
+    _taker_fee = 0.005
+
+    @staticmethod
+    def create_trade_client(credentials):
         return CBTradeClient(credentials)
 
-    def create_product(self, auth_client, trading_currency, buying_currency):
+    @staticmethod
+    def create_product(auth_client, trading_currency, buying_currency):
         return CBProduct(auth_client, trading_currency, buying_currency)
 
-    def create_ticker(self, auth_client, product):
+    @staticmethod
+    def create_ticker(auth_client, product):
         return CBTicker(auth_client, product)
 
-    def create_order(self, auth_client, product, order_type, price, amount):
+    @staticmethod
+    def create_order(auth_client, product, order_type, price, amount):
         return CBOrder(auth_client, product, order_type, price, amount)
 
-    def create_account(self, auth_client, product):
-        return CBAccount(auth_client, product)
-
-    def create_transaction_monitor(self, name):
-        return TransactionMonitor(name, TRANSACTION_FEE)
+    @staticmethod
+    def create_account(auth_client):
+        return CBAccount(auth_client)
