@@ -1,0 +1,17 @@
+{
+  "coinbase" : {
+      "api_key" : "your API key",
+      "api_secret" : "",
+      "api_pass" : "" },
+  "binance" : {
+      "api_key" : "",
+      "api_secret" : "" },
+  "kraken" : {
+      "api_key" : "",
+      "api_secret" : "" },
+  "bitfinex" : {
+      "api_key" : "",
+      "api_secret" : "" },
+  "pushbullet" : {
+      "api_key" : "" }
+}
