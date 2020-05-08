@@ -10,8 +10,6 @@ import json
 
 credentials = json.load(open("cryptrade.json", "r"))
 
-exchanges = ["coinbase", "binance", "kraken", "bitfinex"]
-
 APIs = {
     "coinbase": CBApiCreator(),
     "binance": BinApiCreator(),
