@@ -41,10 +41,6 @@ optional arguments:
   -a TRADE_AMOUNT, --amount TRADE_AMOUNT
                         Initial amount to start trading with (btc>=0.001,
                         eth>=0.01, xrp>=1, ltc=0.1).
-  -ph HIGH_PRICE, --high_price HIGH_PRICE
-                        Do not buy higher than this price.
-  -pl LOW_PRICE, --low_price LOW_PRICE
-                        Do not sell lower than this price.
 ~~~~
 * tickermonitor.py, shows how the asynchronous interfaces can be used by implementing a tickermonitor for all supported exchanges in parallel.
 
