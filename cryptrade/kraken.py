@@ -4,7 +4,7 @@ from cryptrade.exceptions import AuthenticationError, ProductError, ParameterErr
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
 
 import sys
-import time
+from datetime import datetime
 
 
 product_map = {
@@ -189,7 +189,7 @@ class KrakenTicker(Ticker):
                     self._bid = float(v["b"][0])
                     self._ask = float(v["a"][0])
                     self._price = float(v["c"][0])
-                self._timestamp = time.time()
+                self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions
@@ -254,7 +254,7 @@ class KrakenOrder(Order):
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
         if self._settled:
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         return self._settled
 
@@ -282,7 +282,7 @@ class KrakenAccount(Account):
                     c = map_from_exchange_currency(currency.upper())
                     if float(balance) > 0:
                         self._balance[c] = float(balance)
-                self._timestamp = time.time()
+                self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore

@@ -6,7 +6,7 @@ from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account,
 from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
 
 import sys
-import time
+from datetime import datetime
 import asyncio
 
 
@@ -91,7 +91,7 @@ class BfxTicker(Ticker):
             self._bid = product_ticker[0]
             self._ask = product_ticker[2]
             self._price = product_ticker[6]
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions
@@ -164,7 +164,7 @@ class BfxOrder(Order):
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
         if self._settled:
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         return self._settled
 
@@ -190,7 +190,7 @@ class BfxAccount(Account):
                 c = map_from_exchange_currency(wallet.currency.upper())
                 if wallet.balance > 0:
                     self._balance[c] = wallet.balance
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore

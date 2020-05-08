@@ -1,5 +1,5 @@
 import asyncio
-import time
+from datetime import datetime
 from math import trunc
 
 from cryptrade.observers import Observable
@@ -26,8 +26,8 @@ class Product:
         self._buying_currency = buying_currency
         self._prod_id = trading_currency + buying_currency
         self._min_order_value = 0.0
-        self._min_amount = 0.0
-        self._min_price = 0.0
+        self._min_order_amount = 0.0
+        self._min_order_price = 0.0
 
         if self._buying_currency == self._trading_currency:
             raise AttributeError("Trading and buying currency cannot be the same")
@@ -49,25 +49,27 @@ class Product:
         return self._min_order_value
 
     @property
-    def min_amount(self):
-        return self._min_amount
+    def min_order_amount(self):
+        return self._min_order_amount
 
     @property
-    def min_price(self):
-        return self._min_price
+    def min_order_price(self):
+        return self._min_order_price
 
     def valid(self, amount, price):
-        return amount >= self._min_amount and price >= self._min_price and amount * price >= self._min_order_value
+        return amount >= self._min_order_amount and \
+               price >= self._min_order_price and \
+               amount * price >= self._min_order_value
 
     def format_price(self, price):
-        if self._min_price > 0:
-            return trunc_dec(price, len(str(self._min_price)) - 2)
+        if self._min_order_price > 0:
+            return trunc_dec(price, len(str(self._min_order_price)) - 2)
         else:
             return price
 
     def format_amount(self, amount):
-        if self._min_amount > 0:
-            return trunc_dec(amount, len(str(self._min_amount)) - 2)
+        if self._min_order_amount > 0:
+            return trunc_dec(amount, len(str(self._min_order_amount)) - 2)
         else:
             return amount
 
@@ -87,7 +89,7 @@ class Ticker(Observable):
         self._name = ""
 
     def update(self):
-        self._timestamp = time.time()
+        self._timestamp = datetime.now()
 
     def generate(self):
         while True:
@@ -121,9 +123,8 @@ class Ticker(Observable):
         return self._timestamp
 
     def __str__(self):
-        time_format = "%Y-%m-%d %H:%M:%S"
         return (f"Ticker: {self._name}, {self._product}\n"
-                f"Time  : {time.strftime(time_format, time.localtime(self._timestamp))}\n"
+                f"Time  : {self._timestamp}\n"
                 f"Price : {self._price:8.4f}\n"
                 f"Bid   : {self._bid:8.4f}\n"
                 f"Ask   : {self._ask:8.4f}\n"
@@ -234,7 +235,7 @@ class Account(Observable):
         return s
 
     def update(self):
-        self._timestamp = time.time()
+        self._timestamp = datetime.now()
 
     def generate(self):
         while True:
@@ -254,9 +255,8 @@ class Account(Observable):
             return 0
 
     def __str__(self):
-        time_format = "%Y-%m-%d %H:%M:%S"
         return (f"Account: {self._name}\n"
-                f"Time   : {time.strftime(time_format, time.localtime(self._timestamp))}\n"
+                f"Time   : {self._timestamp}\n"
                 f"{self.balance_string()}")
 
 
