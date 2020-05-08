@@ -4,7 +4,7 @@ from cryptrade.exceptions import AuthenticationError, ProductError, ParameterErr
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
 
 import sys
-import time
+from datetime import datetime
 
 
 def map_product(trading_currency, buying_currency):
@@ -67,7 +67,7 @@ class BinTicker(Ticker):
             self._bid = float(product_ticker["bidPrice"])
             self._ask = float(product_ticker["askPrice"])
             self._price = float(product_ticker["lastPrice"])
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions
@@ -134,7 +134,7 @@ class BinOrder(Order):
             self._message = f"order update exception: {sys.exc_info()[1]}"
 
         if self._settled:
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         return self._settled
 
@@ -162,7 +162,7 @@ class BinAccount(Account):
                     amount = float(balance["free"]) + float(balance["locked"])
                     if amount > 0:
                         self._balance[c] = amount
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions

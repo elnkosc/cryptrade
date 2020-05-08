@@ -1,7 +1,4 @@
 import asyncio
-import datetime
-import time
-from math import trunc
 
 
 class Observable:
@@ -40,7 +37,8 @@ class TickerMonitor(Observer):
 
     async def notify(self, ticker):
         # remove entries older than time_window
-        while len(self._ticker_data) > 0 and ticker.timestamp - self._ticker_data[0]["time"] > self._time_window:
+        while len(self._ticker_data) > 0 and \
+                (ticker.timestamp - self._ticker_data[0]["time"]).total_seconds() > self._time_window:
             self._ticker_data.pop(0)
 
         if ticker.timestamp is not None:
@@ -69,13 +67,11 @@ class TickerMonitor(Observer):
         if len(self._ticker_data) == 0:
             return ""
         else:
-            time_format = "%Y-%m-%d %H:%M:%S"
             oldest_time = self._ticker_data[0]["time"]
             newest_time = self._ticker_data[len(self._ticker_data)-1]["time"]
-            time_period = trunc(newest_time - oldest_time)
+            time_period = newest_time - oldest_time
             return (f"TICKER {self._name}\n"
-                    f"Time   : {time.strftime(time_format, time.localtime(newest_time))}\n"
-                    f"Period : {str(datetime.timedelta(seconds=time_period))}\n"
+                    f"Period : {time_period}\n"
                     f"High   : {self._high:8.4f}\n"
                     f"Low    : {self._low:8.4f}\n"
                     f"Average: {self._average:8.4f}\n")
@@ -95,10 +91,10 @@ class AccountMonitor(Observer):
         if len(self._account_data) == 0:
             return ""
         else:
-            time_format = "%Y-%m-%d %H:%M:%S"
             oldest_time = self._account_data[0]["time"]
             newest_time = self._account_data[len(self._account_data) - 1]["time"]
-            time_period = trunc(newest_time - oldest_time)
+            time_period = newest_time - oldest_time
+
             oldest_balance = self._account_data[0]["balance"]
             newest_balance = self._account_data[len(self._account_data)-1]["balance"]
 
@@ -111,8 +107,8 @@ class AccountMonitor(Observer):
                 balance_string += f"* {currency} : {old_currency_balance:8.4f} -> {balance:8.4f}\n"
 
             return (f"ACCOUNT {self._name}\n"
-                    f"Time     : {time.strftime(time_format, time.localtime(newest_time))}\n"
-                    f"Period   : {str(datetime.timedelta(seconds=time_period))}\n"
+                    f"Time     : {newest_time}\n"
+                    f"Period   : {time_period}\n"
                     f"Balances\n{balance_string}")
 
 
@@ -131,10 +127,9 @@ class OrderMonitor(Observer):
                                      "value": order.executed_value})
 
     def __str__(self):
-        time_format = "%Y-%m-%d %H:%M:%S"
         s = f"ORDERS {self._name}\n"
         for order in self._order_data:
-            order_time = time.strftime(time_format, time.localtime(order["time"]))
+            order_time = order["time"]
             order_type = order["type"]
             amount = order["amount"]
             price = order["price"]

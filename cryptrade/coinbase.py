@@ -4,7 +4,7 @@ from cryptrade.exceptions import AuthenticationError, ProductError, ParameterErr
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
 
 import sys
-import time
+from datetime import datetime
 
 
 def map_product(trading_currency, buying_currency):
@@ -70,7 +70,7 @@ class CBTicker(Ticker):
                 self._bid = float(product_ticker["bid"])
                 self._ask = float(product_ticker["ask"])
                 self._price = float(product_ticker["price"])
-                self._timestamp = time.time()
+                self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore exceptions
@@ -133,7 +133,7 @@ class CBOrder(Order):
             self._message = f"get order exception: {sys.exc_info()[1]}"
 
         if self._settled:
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         return self._settled
 
@@ -158,7 +158,7 @@ class CBAccount(Account):
                 c = map_from_exchange_currency(sub_account["currency"].upper())
                 if float(sub_account["balance"]) > 0:
                     self._balance[c] = float(sub_account["balance"])
-            self._timestamp = time.time()
+            self._timestamp = datetime.now().replace(microsecond=0)
 
         except Exception:
             # ignore
