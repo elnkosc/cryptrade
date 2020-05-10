@@ -1,5 +1,5 @@
 #!/usr/bin/python3.7
-from cryptrade.observers import Transactions
+from cryptrade.monitor import Transactions
 from cryptrade.parameters import CommandLine
 from cryptrade.logging import Logger, DEBUG_BASIC, DEBUG_DETAILED
 from cryptrade.exceptions import ParameterError

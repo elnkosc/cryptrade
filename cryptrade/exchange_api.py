@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime
 from math import trunc
-
 from cryptrade.observers import Observable
 
 
@@ -166,10 +165,6 @@ class Order(Observable):
     @property
     def executed_value(self):
         return self._executed_value
-
-    @property
-    def price(self):
-        return self._price
 
     @property
     def error(self):
