@@ -7,20 +7,20 @@ import sys
 from datetime import datetime
 
 
-def map_product(trading_currency, buying_currency):
+def map_product(trading_currency: str, buying_currency: str) -> str:
     return trading_currency + "-" + buying_currency
 
 
-def map_to_exchange_currency(currency):
+def map_to_exchange_currency(currency: str) -> str:
     return currency
 
 
-def map_from_exchange_currency(currency):
+def map_from_exchange_currency(currency: str) -> str:
     return currency
 
 
 class CBTradeClient(TradeClient):
-    def __init__(self, credentials):
+    def __init__(self, credentials: dict) -> None:
         super().__init__()
 
         if "coinbase" in credentials and \
@@ -40,7 +40,7 @@ class CBTradeClient(TradeClient):
 
 
 class CBProduct(Product):
-    def __init__(self, auth_client, trading_currency, buying_currency):
+    def __init__(self, auth_client: CBTradeClient, trading_currency: str, buying_currency: str) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
             self._prod_id = map_product(self._trading_currency, self._buying_currency)
@@ -58,11 +58,11 @@ class CBProduct(Product):
 
 
 class CBTicker(Ticker):
-    def __init__(self, auth_client, product):
+    def __init__(self, auth_client: CBTradeClient, product: CBProduct) -> None:
         super().__init__(auth_client, product)
         self._name = "Coinbase Pro"
 
-    def update(self):
+    def update(self) -> None:
         try:
             product_ticker = self._auth_client.client.get_product_ticker(self._product.prod_id)
 
@@ -78,7 +78,8 @@ class CBTicker(Ticker):
 
 
 class CBOrder(Order):
-    def __init__(self, auth_client, product, order_type, price, amount):
+    def __init__(self, auth_client: CBTradeClient, product: CBProduct, order_type: str,
+                 price: float, amount: float) -> None:
         try:
             super().__init__(auth_client, product, order_type, price, amount)
 
@@ -114,7 +115,7 @@ class CBOrder(Order):
             self._settled = True
             self._message = f"Invalid order: {sys.exc_info()[1]}"
 
-    def status(self):
+    def status(self) -> bool:
         try:
             order_update = self._auth_client.client.get_order(self._order_id)
 
@@ -137,7 +138,7 @@ class CBOrder(Order):
 
         return self._settled
 
-    def cancel(self):
+    def cancel(self) -> None:
         if not self._settled:
             try:
                 super().cancel()
@@ -147,11 +148,11 @@ class CBOrder(Order):
 
 
 class CBAccount(Account):
-    def __init__(self, auth_client):
+    def __init__(self, auth_client: CBTradeClient) -> None:
         super().__init__(auth_client)
         self._name = "Coinbase Pro"
 
-    def update(self):
+    def update(self) -> None:
         try:
             self._balance.clear()
             for sub_account in self._auth_client.client.get_accounts():
@@ -170,21 +171,22 @@ class CBApiCreator(ApiCreator):
     _taker_fee = 0.005
 
     @staticmethod
-    def create_trade_client(credentials):
+    def create_trade_client(credentials: dict) -> CBTradeClient:
         return CBTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client, trading_currency, buying_currency):
+    def create_product(auth_client: CBTradeClient, trading_currency: str, buying_currency: str) -> CBProduct:
         return CBProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod
-    def create_ticker(auth_client, product):
+    def create_ticker(auth_client: CBTradeClient, product: CBProduct) -> CBTicker:
         return CBTicker(auth_client, product)
 
     @staticmethod
-    def create_order(auth_client, product, order_type, price, amount):
+    def create_order(auth_client: CBTradeClient, product: CBProduct, order_type: str, price: float,
+                     amount: float) -> CBOrder:
         return CBOrder(auth_client, product, order_type, price, amount)
 
     @staticmethod
-    def create_account(auth_client):
+    def create_account(auth_client: CBTradeClient) -> CBAccount:
         return CBAccount(auth_client)

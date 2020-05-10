@@ -10,11 +10,11 @@ from datetime import datetime
 import asyncio
 
 
-def map_product(trading_currency, buying_currency):
+def map_product(trading_currency: str, buying_currency: str) -> str:
     return map_to_exchange_currency(trading_currency) + map_to_exchange_currency(buying_currency)
 
 
-def map_to_exchange_currency(currency):
+def map_to_exchange_currency(currency: str) -> str:
     if currency == "USDT":
         c = "UST"
     elif currency == "TUSD":
@@ -24,7 +24,7 @@ def map_to_exchange_currency(currency):
     return c
 
 
-def map_from_exchange_currency(currency):
+def map_from_exchange_currency(currency: str) -> str:
     if currency == "UST":
         c = "USDT"
     elif currency == "TSD":
@@ -35,7 +35,7 @@ def map_from_exchange_currency(currency):
 
 
 class BfxTradeClient(TradeClient):
-    def __init__(self, credentials):
+    def __init__(self, credentials: dict) -> None:
         super().__init__()
 
         if "bitfinex" in credentials and \
@@ -56,7 +56,7 @@ class BfxTradeClient(TradeClient):
 
 
 class BfxProduct(Product):
-    def __init__(self, auth_client, trading_currency, buying_currency):
+    def __init__(self, auth_client: BfxTradeClient, trading_currency: str, buying_currency: str) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
             self._prod_id = map_product(self._trading_currency, self._buying_currency)
@@ -81,11 +81,11 @@ class BfxProduct(Product):
 
 
 class BfxTicker(Ticker):
-    def __init__(self, auth_client, product):
+    def __init__(self, auth_client: BfxTradeClient, product: BfxProduct) -> None:
         super().__init__(auth_client, product)
         self._name = "Bitfinex"
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         try:
             product_ticker = await self._auth_client.client["v2"].get_public_ticker("t" + self._product.prod_id)
             self._bid = product_ticker[0]
@@ -97,10 +97,10 @@ class BfxTicker(Ticker):
             # ignore exceptions
             pass
 
-    def update(self):
+    def update(self) -> None:
         asyncio.run(self.async_update())
 
-    async def produce(self, interval):
+    async def produce(self, interval: int) -> None:
         while True:
             await self.async_update()
             await self.notify()
@@ -108,7 +108,8 @@ class BfxTicker(Ticker):
 
 
 class BfxOrder(Order):
-    def __init__(self, auth_client, product, order_type, price, amount):
+    def __init__(self, auth_client: BfxTradeClient, product: BfxProduct, order_type: str,
+                 price: float, amount: float) -> None:
         try:
             super().__init__(auth_client, product, order_type, price, amount)
 
@@ -143,7 +144,7 @@ class BfxOrder(Order):
             self._settled = True
             self._message = f"Invalid order: {sys.exc_info()[1]}"
 
-    def status(self):
+    def status(self) -> bool:
         try:
             order_update = asyncio.run(self._auth_client.client["v2"].submit_update_order(self._order_id))
 
@@ -168,7 +169,7 @@ class BfxOrder(Order):
 
         return self._settled
 
-    def cancel(self):
+    def cancel(self) -> None:
         if not self._settled:
             try:
                 super().cancel()
@@ -178,11 +179,11 @@ class BfxOrder(Order):
 
 
 class BfxAccount(Account):
-    def __init__(self, auth_client):
+    def __init__(self, auth_client: BfxTradeClient) -> None:
         super().__init__(auth_client)
         self._name = "Bitfinex"
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         try:
             account_info = await self._auth_client.client["v2"].get_wallets()
             self._balance.clear()
@@ -196,10 +197,10 @@ class BfxAccount(Account):
             # ignore
             pass
 
-    def update(self):
+    def update(self) -> None:
         asyncio.run(self.async_update())
 
-    async def produce(self, interval):
+    async def produce(self, interval: int) -> None:
         while True:
             await self.async_update()
             await self.notify()
@@ -211,21 +212,22 @@ class BfxApiCreator(ApiCreator):
     _taker_fee = 0.002
 
     @staticmethod
-    def create_trade_client(credentials):
+    def create_trade_client(credentials: dict) -> BfxTradeClient:
         return BfxTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client, trading_currency, buying_currency):
+    def create_product(auth_client: BfxTradeClient, trading_currency: str, buying_currency: str) -> BfxProduct:
         return BfxProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod
-    def create_ticker(auth_client, product):
+    def create_ticker(auth_client: BfxTradeClient, product: BfxProduct) -> BfxTicker:
         return BfxTicker(auth_client, product)
 
     @staticmethod
-    def create_order(auth_client, product, order_type, price, amount):
+    def create_order(auth_client: BfxTradeClient, product: BfxProduct, order_type: str, price: float,
+                     amount: float) -> BfxOrder:
         return BfxOrder(auth_client, product, order_type, price, amount)
 
     @staticmethod
-    def create_account(auth_client):
+    def create_account(auth_client: BfxTradeClient) -> BfxAccount:
         return BfxAccount(auth_client)

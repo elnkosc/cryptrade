@@ -1,0 +1,17 @@
+{
+  "coinbase" : {
+      "api_key" : "675a63e600760398c9f0f68de9dff817",
+      "api_secret" : "WTNXF7mvFL81jNUddvpVR3+2ThWY0a7SUyRM//IOqnTu9AMJErVgOMXUPEqOn2rrqH6sRwtA3z70E+msdYB6TQ==",
+      "api_pass" : "41dyi6ndhxs" },
+  "binance" : {
+      "api_key" : "A2c2hKQx9GhGoLKic6M5pRYilpiv2t01IX5sgFmnvxRmSz2lg3F0pl4HKbyG78f4",
+      "api_secret" : "vseDkIsppCQNsPUCiU4431oFwBByFT1AWpMX8jxo1cqs3QFMwZoZMQJ8nTy4t2YZ" },
+  "kraken" : {
+      "api_key" : "uQT8y3jL5+PL1xoXMSuZ/y8HiE4NCUjvTFlnEIVfocrrJzizZA8K+aDc",
+      "api_secret" : "vGdm+gFJCGXlkYI28REfebFPlWhdmW2QPNFy5sm+bkQBTWYE7TTrCeHhZVFPmciTuMGX/+HcLCkalN5Y6KSfRA==" },
+  "bitfinex" : {
+      "api_key" : "F4TMEQ9gORlGOHnwDODhvPz6XRPacJcT8ppCFsBxyGx",
+      "api_secret" : "54AANbtugyNVUdP994xjuhxhMaJOCFA791adOUNcfKB" },
+  "pushbullet" : {
+      "api_key" : "o.OLU65jGQ6UE0Ch1iI7OGLRjpCg9WfVrS" }
+}

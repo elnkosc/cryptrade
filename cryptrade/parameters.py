@@ -3,7 +3,7 @@ from cryptrade.exceptions import ParameterError
 
 
 class TradeParameters:
-    def __init__(self):
+    def __init__(self) -> None:
         self._logging_level = 1
         self._currency = "BTC"
         self._exchange = "coinbase"
@@ -16,48 +16,48 @@ class TradeParameters:
         self._buying_currency = "EUR"
 
     @property
-    def logging_level(self):
+    def logging_level(self) -> int:
         return self._logging_level
 
     @property
-    def exchange(self):
+    def exchange(self) -> str:
         return self._exchange
 
     @property
-    def trading_currency(self):
+    def trading_currency(self) -> str:
         return self._currency
 
     @property
-    def buying_currency(self):
+    def buying_currency(self) -> str:
         return self._buying_currency
 
     @property
-    def empty_order(self):
+    def empty_order(self) -> bool:
         return self._empty_order
 
     @property
-    def low_price(self):
+    def low_price(self) -> float:
         return self._low_price
 
     @property
-    def high_price(self):
+    def high_price(self) -> float:
         return self._high_price
 
     @property
-    def delta(self):
+    def delta(self) -> float:
         return self._delta
 
     @property
-    def basic_amount(self):
+    def basic_amount(self) -> float:
         return self._basic_amount
 
     @property
-    def basic_units(self):
+    def basic_units(self) -> int:
         return self._basic_units
 
 
 class CommandLine(TradeParameters):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         parser = argparse.ArgumentParser(

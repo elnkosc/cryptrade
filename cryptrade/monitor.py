@@ -3,7 +3,7 @@ from cryptrade.exchange_api import Ticker, Account, Order
 
 
 class TickerMonitor(Observer):
-    def __init__(self, ticker: Ticker, ticker_name: str, time_window: int):
+    def __init__(self, ticker: Ticker, ticker_name: str, time_window: int) -> None:
         super().__init__(ticker)
         self._name = ticker_name
         self._time_window = time_window
@@ -12,7 +12,7 @@ class TickerMonitor(Observer):
         self._average = 0
         self._ticker_data = []
 
-    async def notify(self, ticker: Ticker):
+    async def notify(self, ticker: Ticker) -> None:
         # remove entries older than time_window
         while len(self._ticker_data) > 0 and \
                 (ticker.timestamp - self._ticker_data[0]["time"]).total_seconds() > self._time_window:
@@ -29,18 +29,18 @@ class TickerMonitor(Observer):
             self._average = sum(prices) / len(prices)
 
     @property
-    def high(self):
+    def high(self) -> float:
         return self._high
 
     @property
-    def low(self):
+    def low(self) -> float:
         return self._low
 
     @property
-    def average(self):
+    def average(self) -> float:
         return self._average
 
-    def __str__(self):
+    def __str__(self) -> str:
         if len(self._ticker_data) == 0:
             return ""
         else:
@@ -55,16 +55,16 @@ class TickerMonitor(Observer):
 
 
 class AccountMonitor(Observer):
-    def __init__(self, account: Account, account_name: str):
+    def __init__(self, account: Account, account_name: str) -> None:
         super().__init__(account)
         self._name = account_name
         self._account_data = []
 
-    async def notify(self, account: Account):
+    async def notify(self, account: Account) -> None:
         if account.timestamp is not None:
             self._account_data.append({"time": account.timestamp, "balance": account.balance})
 
-    def __str__(self):
+    def __str__(self) -> str:
         if len(self._account_data) == 0:
             return ""
         else:
@@ -90,19 +90,19 @@ class AccountMonitor(Observer):
 
 
 class OrderMonitor(Observer):
-    def __init__(self, order: Order, order_name: str):
+    def __init__(self, order: Order, order_name: str) -> None:
         super().__init__(order)
         self._name = order_name
         self._order_data = []
 
-    async def notify(self, order: Order):
+    async def notify(self, order: Order) -> None:
         if order.timestamp is not None:
             self._order_data.append({"time": order.timestamp,
                                      "type": order.order_type,
                                      "amount": order.filled_size,
                                      "value": order.executed_value})
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = f"ORDERS {self._name}\n"
         for order in self._order_data:
             order_time = order["time"]
@@ -118,7 +118,7 @@ class OrderMonitor(Observer):
 
 
 class Transactions:
-    def __init__(self, name: str, fee: float = None):
+    def __init__(self, name: str, fee: float = None) -> None:
         self._name = name
         self._fee = fee
         self._number = 0
@@ -126,7 +126,7 @@ class Transactions:
         self._value = 0.0
         self._total_fee = 0.0
 
-    def add(self, filled_size: float, executed_value: float):
+    def add(self, filled_size: float, executed_value: float) -> None:
         self._amount += filled_size
         self._value += executed_value
         self._number += 1
@@ -134,22 +134,22 @@ class Transactions:
             self._total_fee += (executed_value * self._fee)
 
     @property
-    def amount(self):
+    def amount(self) -> float:
         return self._amount
 
     @property
-    def value(self):
+    def value(self) -> float:
         return self._value
 
     @property
-    def number(self):
+    def number(self) -> int:
         return self._number
 
     @property
-    def total_fee(self):
+    def total_fee(self) -> float:
         return self._total_fee
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"TRANSACTIONS {self._name}\n"
                 f"Number  : {self._number:4d}\n"
                 f"Amount  : {self._amount:4.4f}\n"

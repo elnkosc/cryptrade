@@ -4,13 +4,13 @@ from math import trunc
 from cryptrade.observers import Observable
 
 
-def trunc_dec(number, digits):
+def trunc_dec(number: float, digits: int) -> float:
     stepper = 10 ** digits
     return trunc(stepper * number) / stepper
 
 
 class TradeClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self._client = None
 
     @property
@@ -19,7 +19,7 @@ class TradeClient:
 
 
 class Product:
-    def __init__(self, auth_client, trading_currency, buying_currency):
+    def __init__(self, auth_client: TradeClient, trading_currency: str, buying_currency: str) -> None:
         self._auth_client = auth_client
         self._trading_currency = trading_currency
         self._buying_currency = buying_currency
@@ -32,52 +32,52 @@ class Product:
             raise AttributeError("Trading and buying currency cannot be the same")
 
     @property
-    def buying_currency(self):
+    def buying_currency(self) -> str:
         return self._buying_currency
 
     @property
-    def trading_currency(self):
+    def trading_currency(self) -> str:
         return self._trading_currency
 
     @property
-    def prod_id(self):
+    def prod_id(self) -> str:
         return self._prod_id
 
     @property
-    def min_order_value(self):
+    def min_order_value(self) -> float:
         return self._min_order_value
 
     @property
-    def min_order_amount(self):
+    def min_order_amount(self) -> float:
         return self._min_order_amount
 
     @property
-    def min_order_price(self):
+    def min_order_price(self) -> float:
         return self._min_order_price
 
-    def valid(self, amount, price):
+    def valid(self, amount: float, price: float) -> bool:
         return amount >= self._min_order_amount and \
                price >= self._min_order_price and \
                amount * price >= self._min_order_value
 
-    def format_price(self, price):
+    def format_price(self, price: float) -> float:
         if self._min_order_price > 0:
             return trunc_dec(price, len(str(self._min_order_price)) - 2)
         else:
             return price
 
-    def format_amount(self, amount):
+    def format_amount(self, amount: float) -> float:
         if self._min_order_amount > 0:
             return trunc_dec(amount, len(str(self._min_order_amount)) - 2)
         else:
             return amount
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._trading_currency}-{self._buying_currency}"
 
 
 class Ticker(Observable):
-    def __init__(self, auth_client, product):
+    def __init__(self, auth_client: TradeClient, product: Product) -> None:
         super().__init__()
         self._auth_client = auth_client
         self._product = product
@@ -87,41 +87,37 @@ class Ticker(Observable):
         self._timestamp = None
         self._name = ""
 
-    def update(self):
+    def update(self) -> None:
         self._timestamp = datetime.now()
 
-    def generate(self):
+    def generate(self) -> None:
         while True:
             self.update()
             yield self
 
-    async def produce(self, interval):
+    async def produce(self, interval: int) -> None:
         while True:
             self.update()
             await self.notify()
             await asyncio.sleep(interval)
 
     @property
-    def spread(self):
-        return self._ask - self._bid
-
-    @property
-    def bid(self):
+    def bid(self) -> float:
         return self._bid
 
     @property
-    def ask(self):
+    def ask(self) -> float:
         return self._ask
 
     @property
-    def price(self):
+    def price(self) -> float:
         return self._price
 
     @property
-    def timestamp(self):
+    def timestamp(self) -> datetime:
         return self._timestamp
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Ticker: {self._name}, {self._product}\n"
                 f"Time  : {self._timestamp}\n"
                 f"Price : {self._price:8.4f}\n"
@@ -131,7 +127,8 @@ class Ticker(Observable):
 
 
 class Order(Observable):
-    def __init__(self, auth_client, product, order_type, price, amount):
+    def __init__(self, auth_client: TradeClient, product: Product, order_type: str, price: float,
+                 amount: float) -> None:
         super().__init__()
         self._auth_client = auth_client
         self._product = product
@@ -147,53 +144,53 @@ class Order(Observable):
         self._message = ""
         self._timestamp = None
 
-    def status(self):
+    def status(self) -> bool:
         return self._settled
 
     @property
-    def order_id(self):
+    def order_id(self) -> str:
         return self._order_id
 
     @property
-    def order_type(self):
+    def order_type(self) -> str:
         return self._order_type
 
     @property
-    def filled_size(self):
+    def filled_size(self) -> float:
         return self._filled_size
 
     @property
-    def executed_value(self):
+    def executed_value(self) -> float:
         return self._executed_value
 
     @property
-    def error(self):
+    def error(self) -> str:
         return self._status == "error"
 
     @property
-    def created(self):
+    def created(self) -> bool:
         return self._created
 
     @property
-    def message(self):
+    def message(self) -> str:
         return self._message
 
     @property
-    def timestamp(self):
+    def timestamp(self) -> datetime:
         return self._timestamp
 
-    async def produce(self, interval):
+    async def produce(self, interval: int) -> None:
         while True:
             if self.status():
                 await self.notify()
             await asyncio.sleep(interval)
 
-    def cancel(self):
+    def cancel(self) -> None:
         self._status = "canceled"
         self._message = "order canceled by user"
         self._settled = True
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Order:\n"
                 f"Order ID      : {self._order_id}\n"
                 f"Product ID    : {self._product.prod_id}\n"
@@ -208,7 +205,7 @@ class Order(Observable):
 
 
 class Account(Observable):
-    def __init__(self, auth_client):
+    def __init__(self, auth_client: TradeClient) -> None:
         super().__init__()
         self._auth_client = auth_client
         self._balance = {}
@@ -216,40 +213,40 @@ class Account(Observable):
         self._name = ""
 
     @property
-    def timestamp(self):
+    def timestamp(self) -> datetime:
         return self._timestamp
 
     @property
-    def balance(self):
+    def balance(self) -> dict:
         return self._balance
 
-    def balance_string(self):
+    def balance_string(self) -> str:
         s = ""
         for currency, balance in self._balance.items():
             s += f"{currency} : {balance:8.4f}\n"
         return s
 
-    def update(self):
+    def update(self) -> None:
         self._timestamp = datetime.now()
 
-    def generate(self):
+    def generate(self) -> None:
         while True:
             self.update()
             yield self
 
-    async def produce(self, interval):
+    async def produce(self, interval: int) -> None:
         while True:
             self.update()
             await self.notify()
             await asyncio.sleep(interval)
 
-    def currency_balance(self, currency):
+    def currency_balance(self, currency: str) -> float:
         if currency in self._balance.keys():
             return self._balance[currency]
         else:
             return 0
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Account: {self._name}\n"
                 f"Time   : {self._timestamp}\n"
                 f"{self.balance_string()}")
@@ -260,29 +257,29 @@ class ApiCreator:
     _taker_fee = 0
 
     @staticmethod
-    def create_trade_client(credentials):
+    def create_trade_client(credentials: dict) -> TradeClient:
         return TradeClient()
 
     @staticmethod
-    def create_product(auth_client, trading_currency, buying_currency):
+    def create_product(auth_client: TradeClient, trading_currency: str, buying_currency: str) -> Product:
         return Product(auth_client, trading_currency, buying_currency)
 
     @staticmethod
-    def create_ticker(auth_client, product):
+    def create_ticker(auth_client: TradeClient, product: Product) -> Ticker:
         return Ticker(auth_client, product)
 
     @staticmethod
-    def create_order(auth_client, product, order_type, price, amount):
-        return Order(auth_client, product, order_type, product, amount)
+    def create_order(auth_client: TradeClient, product: Product, order_type: str, price: float, amount: float) -> Order:
+        return Order(auth_client, product, order_type, price, amount)
 
     @staticmethod
-    def create_account(auth_client):
+    def create_account(auth_client: TradeClient) -> Account:
         return Account(auth_client)
 
     @classmethod
-    def maker_fee(cls):
+    def maker_fee(cls) -> float:
         return cls._maker_fee
 
     @classmethod
-    def taker_fee(cls):
+    def taker_fee(cls) -> float:
         return cls._taker_fee

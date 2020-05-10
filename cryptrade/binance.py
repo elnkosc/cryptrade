@@ -7,20 +7,20 @@ import sys
 from datetime import datetime
 
 
-def map_product(trading_currency, buying_currency):
+def map_product(trading_currency: str, buying_currency: str) -> str:
     return trading_currency + buying_currency
 
 
-def map_to_exchange_currency(currency):
+def map_to_exchange_currency(currency: str) -> str:
     return currency
 
 
-def map_from_exchange_currency(currency):
+def map_from_exchange_currency(currency: str) -> str:
     return currency
 
 
 class BinTradeClient(TradeClient):
-    def __init__(self, credentials):
+    def __init__(self, credentials: dict) -> None:
         super().__init__()
 
         if "binance" in credentials and \
@@ -38,7 +38,7 @@ class BinTradeClient(TradeClient):
 
 
 class BinProduct(Product):
-    def __init__(self, auth_client, trading_currency, buying_currency):
+    def __init__(self, auth_client: BinTradeClient, trading_currency: str, buying_currency: str) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
             self._prod_id = map_product(self._trading_currency, self._buying_currency)
@@ -57,11 +57,11 @@ class BinProduct(Product):
 
 
 class BinTicker(Ticker):
-    def __init__(self, auth_client, product):
+    def __init__(self, auth_client: BinTradeClient, product: BinProduct) -> None:
         super().__init__(auth_client, product)
         self._name = "Binance"
 
-    def update(self):
+    def update(self) -> None:
         try:
             product_ticker = self._auth_client.client.get_ticker(symbol=self._product.prod_id)
             self._bid = float(product_ticker["bidPrice"])
@@ -75,7 +75,8 @@ class BinTicker(Ticker):
 
 
 class BinOrder(Order):
-    def __init__(self, auth_client, product, order_type, price, amount):
+    def __init__(self, auth_client: BinTradeClient, product: BinProduct, order_type: str,
+                 price: float, amount: float) -> None:
         try:
             super().__init__(auth_client, product, order_type, price, amount)
 
@@ -114,7 +115,7 @@ class BinOrder(Order):
             self._settled = True
             self._message = f"Invalid order: {sys.exc_info()[1]}"
 
-    def status(self):
+    def status(self) -> bool:
         try:
             order_update = self._auth_client.client.get_order(symbol=self._product.prod_id, orderId=self._order_id)
 
@@ -148,11 +149,11 @@ class BinOrder(Order):
 
 
 class BinAccount(Account):
-    def __init__(self, auth_client):
+    def __init__(self, auth_client: BinTradeClient) -> None:
         super().__init__(auth_client)
         self._name = "Binance"
 
-    def update(self):
+    def update(self) -> None:
         try:
             account = self._auth_client.client.get_account()
             self._balance.clear()
@@ -174,21 +175,22 @@ class BinApiCreator(ApiCreator):
     _taker_fee = 0.002
 
     @staticmethod
-    def create_trade_client(credentials):
+    def create_trade_client(credentials: dict) -> BinTradeClient:
         return BinTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client, trading_currency, buying_currency):
+    def create_product(auth_client: BinTradeClient, trading_currency: str, buying_currency: str) -> BinProduct:
         return BinProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod
-    def create_ticker(auth_client, product):
+    def create_ticker(auth_client: BinTradeClient, product: BinProduct) -> BinTicker:
         return BinTicker(auth_client, product)
 
     @staticmethod
-    def create_order(auth_client, product, order_type, price, amount):
+    def create_order(auth_client: BinTradeClient, product: BinProduct, order_type: str, price: float,
+                     amount: float) -> BinOrder:
         return BinOrder(auth_client, product, order_type, price, amount)
 
     @staticmethod
-    def create_account(auth_client):
+    def create_account(auth_client: BinTradeClient) -> BinAccount:
         return BinAccount(auth_client)
