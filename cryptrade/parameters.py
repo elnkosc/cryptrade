@@ -4,19 +4,11 @@ from cryptrade.exceptions import ParameterError
 
 class TradeParameters:
     def __init__(self):
-        self._logging_level = 1
         self._currency = "BTC"
         self._exchange = "coinbase"
-        self._low_price = 0
-        self._high_price = 1000000
         self._delta = 1.5
         self._basic_amount = 0.001
-        self._basic_units = 1
         self._buying_currency = "EUR"
-
-    @property
-    def logging_level(self):
-        return self._logging_level
 
     @property
     def exchange(self):
@@ -31,14 +23,6 @@ class TradeParameters:
         return self._buying_currency
 
     @property
-    def low_price(self):
-        return self._low_price
-
-    @property
-    def high_price(self):
-        return self._high_price
-
-    @property
     def delta(self):
         return self._delta
 
@@ -46,9 +30,6 @@ class TradeParameters:
     def basic_amount(self):
         return self._basic_amount
 
-    @property
-    def basic_units(self):
-        return self._basic_units
 
 
 class CommandLine(TradeParameters):
@@ -84,7 +65,6 @@ class CommandLine(TradeParameters):
 
         args = parser.parse_args()
 
-        self._logging_level = args.logging_level
         self._currency = args.currency.upper()
         self._exchange = args.exchange.lower()
         self._delta = args.trade_delta / 100
