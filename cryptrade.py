@@ -19,9 +19,9 @@ APIs = {
 }
 
 parameters = CommandLine()
-logger = Logger(parameters.logging_level)
+logger = Logger(DEBUG_DETAILED)
 
-credentials = json.load(open(__file__.replace(".py", ".json"), "r"))
+credentials = json.load(open("cryptrade.json", "r"))
 
 if parameters.exchange in APIs:
     api_factory = APIs[parameters.exchange]
