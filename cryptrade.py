@@ -1,7 +1,7 @@
 #!/usr/bin/python3.7
+from cryptrade.logging import Logger, DEBUG_BASIC, DEBUG_DETAILED
 from cryptrade.monitor import Transactions
 from cryptrade.parameters import CommandLine
-from cryptrade.logging import Logger, DEBUG_BASIC, DEBUG_DETAILED
 from cryptrade.exceptions import ParameterError
 from cryptrade.coinbase import CBApiCreator
 from cryptrade.binance import BinApiCreator
