@@ -113,7 +113,7 @@ currency_map = {
     "DAO": "XDAO"}
 
 
-def map_product(trading_currency, buying_currency):
+def map_product(trading_currency: str, buying_currency: str) -> str:
     prod_id = trading_currency + buying_currency
     if prod_id in product_map:
         return product_map[prod_id]
@@ -121,14 +121,14 @@ def map_product(trading_currency, buying_currency):
         return prod_id
 
 
-def map_to_exchange_currency(currency):
+def map_to_exchange_currency(currency: str) -> str:
     if currency in currency_map:
         return currency_map[currency]
     else:
         return currency
 
 
-def map_from_exchange_currency(currency):
+def map_from_exchange_currency(currency: str) -> str:
     if currency in currency_map.values():
         return next(key for key, value in currency_map.items() if value == currency)
     else:
@@ -136,7 +136,7 @@ def map_from_exchange_currency(currency):
 
 
 class KrakenTradeClient(TradeClient):
-    def __init__(self, credentials):
+    def __init__(self, credentials: dict) -> None:
         super().__init__()
 
         if "kraken" in credentials and \
@@ -154,7 +154,7 @@ class KrakenTradeClient(TradeClient):
 
 
 class KrakenProduct(Product):
-    def __init__(self, auth_client, trading_currency, buying_currency):
+    def __init__(self, auth_client: KrakenTradeClient, trading_currency: str, buying_currency: str) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
             self._prod_id = map_product(self._trading_currency, self._buying_currency)
@@ -177,11 +177,11 @@ class KrakenProduct(Product):
 
 
 class KrakenTicker(Ticker):
-    def __init__(self, auth_client, product):
+    def __init__(self, auth_client: KrakenTradeClient, product: KrakenProduct) -> None:
         super().__init__(auth_client, product)
         self._name = "Kraken"
 
-    def update(self):
+    def update(self) -> None:
         try:
             product_ticker = self._auth_client.client.query_public("Ticker", {"pair": f"{self._product.prod_id}"})
             if "result" in product_ticker:
@@ -197,7 +197,8 @@ class KrakenTicker(Ticker):
 
 
 class KrakenOrder(Order):
-    def __init__(self, auth_client, product, order_type, price, amount):
+    def __init__(self, auth_client: KrakenTradeClient, product: KrakenProduct, order_type: str,
+                 price: float, amount: float) -> None:
         try:
             super().__init__(auth_client, product, order_type, price, amount)
 
@@ -234,7 +235,7 @@ class KrakenOrder(Order):
             self._settled = True
             self._message = f"Invalid order: {sys.exc_info()[1]}"
 
-    def status(self):
+    def status(self) -> bool:
         try:
             order_data = {"txid": self._order_id}
             order_update = self._auth_client.client.query_private("QueryOrders", order_data)
@@ -258,7 +259,7 @@ class KrakenOrder(Order):
 
         return self._settled
 
-    def cancel(self):
+    def cancel(self) -> None:
         if not self._settled:
             try:
                 super().cancel()
@@ -268,11 +269,11 @@ class KrakenOrder(Order):
 
 
 class KrakenAccount(Account):
-    def __init__(self, auth_client):
+    def __init__(self, auth_client: KrakenTradeClient) -> None:
         super().__init__(auth_client)
         self._name = "Kraken"
 
-    def update(self):
+    def update(self) -> None:
         try:
             account_info = self._auth_client.client.query_private("Balance")
 
@@ -294,21 +295,22 @@ class KrakenApiCreator(ApiCreator):
     _taker_fee = 0.0026
 
     @staticmethod
-    def create_trade_client(credentials):
+    def create_trade_client(credentials: dict) -> KrakenTradeClient:
         return KrakenTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client, trading_currency, buying_currency):
+    def create_product(auth_client: KrakenTradeClient, trading_currency: str, buying_currency: str) -> KrakenProduct:
         return KrakenProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod
-    def create_ticker(auth_client, product):
+    def create_ticker(auth_client: KrakenTradeClient, product: KrakenProduct) -> KrakenTicker:
         return KrakenTicker(auth_client, product)
 
     @staticmethod
-    def create_order(auth_client, product, order_type, price, amount):
+    def create_order(auth_client: KrakenTradeClient, product: KrakenProduct, order_type: str,
+                     price: float, amount: float) -> KrakenOrder:
         return KrakenOrder(auth_client, product, order_type, price, amount)
 
     @staticmethod
-    def create_account(auth_client):
+    def create_account(auth_client: KrakenTradeClient) -> KrakenAccount:
         return KrakenAccount(auth_client)

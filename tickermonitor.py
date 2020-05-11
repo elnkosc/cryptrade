@@ -3,7 +3,7 @@ from cryptrade.coinbase import CBApiCreator
 from cryptrade.binance import BinApiCreator
 from cryptrade.kraken import KrakenApiCreator
 from cryptrade.bitfinex import BfxApiCreator
-from cryptrade.observers import TickerMonitor
+from cryptrade.monitor import TickerMonitor
 
 import asyncio
 import json
