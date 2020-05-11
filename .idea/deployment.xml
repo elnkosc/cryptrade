@@ -5,7 +5,7 @@
       <paths name="192.168.1.97">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/cbpro" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

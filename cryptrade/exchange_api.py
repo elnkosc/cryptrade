@@ -123,7 +123,7 @@ class Ticker(Observable):
                 f"Price : {self._price:8.4f}\n"
                 f"Bid   : {self._bid:8.4f}\n"
                 f"Ask   : {self._ask:8.4f}\n"
-                f"Spread: {self.spread:8.4f}\n")
+                f"Spread: {self._ask-self._bid:8.4f}\n")
 
 
 class Order(Observable):
@@ -164,7 +164,7 @@ class Order(Observable):
         return self._executed_value
 
     @property
-    def error(self) -> str:
+    def error(self) -> bool:
         return self._status == "error"
 
     @property
