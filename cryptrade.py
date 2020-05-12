@@ -21,7 +21,7 @@ APIs = {
 parameters = CommandLine()
 logger = Logger(DEBUG_DETAILED)
 
-credentials = json.load(open("cryptrade.json", "r"))
+credentials = json.load(open("credentials.json", "r"))
 
 if parameters.exchange in APIs:
     api_factory = APIs[parameters.exchange]

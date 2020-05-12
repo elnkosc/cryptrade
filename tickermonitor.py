@@ -8,7 +8,7 @@ from cryptrade.monitor import TickerMonitor
 import asyncio
 import json
 
-credentials = json.load(open("cryptrade.json", "r"))
+credentials = json.load(open("credentials.json", "r"))
 
 APIs = {
     "coinbase": CBApiCreator(),
