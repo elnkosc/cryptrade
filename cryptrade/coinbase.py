@@ -1,6 +1,6 @@
 import cbpro
 
-from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exceptions import AuthenticationError, ProductError
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
 
 import sys
@@ -30,13 +30,16 @@ class CBTradeClient(TradeClient):
             api_key = credentials["coinbase"]["api_key"]
             api_secret = credentials["coinbase"]["api_secret"]
             api_pass = credentials["coinbase"]["api_pass"]
-        else:
-            raise ParameterError("missing or invalid credentials for Coinbase Pro")
+            try:
+                self._client = cbpro.AuthenticatedClient(api_key, api_secret, api_pass)
+            except Exception:
+                raise AuthenticationError("invalid Coinbase API key, secret, and/or password")
 
-        try:
-            self._client = cbpro.AuthenticatedClient(api_key, api_secret, api_pass)
-        except Exception:
-            raise AuthenticationError("invalid Coinbase API key, secret, and/or password")
+        else:
+            try:
+                self._client = cbpro.PublicClient()
+            except:
+                raise AuthenticationError("Could not create non-authenticated Client for Coinbase Pro")
 
 
 class CBProduct(Product):

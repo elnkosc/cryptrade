@@ -1,6 +1,6 @@
 import krakenex
 
-from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exceptions import AuthenticationError, ProductError
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
 
 import sys
@@ -144,13 +144,15 @@ class KrakenTradeClient(TradeClient):
                 "api_secret" in credentials["kraken"]:
             api_key = credentials["kraken"]["api_key"]
             api_secret = credentials["kraken"]["api_secret"]
+            try:
+                self._client = krakenex.API(api_key, api_secret)
+            except Exception:
+                raise AuthenticationError("invalid Kraken API key and/or secret")
         else:
-            raise ParameterError("missing or invalid credentials for Kraken")
-
-        try:
-            self._client = krakenex.API(api_key, api_secret)
-        except Exception:
-            raise AuthenticationError("invalid Kraken API key and/or secret")
+            try:
+                self._client = krakenex.API()
+            except Exception:
+                raise AuthenticationError("Could not create non-authenticated Client for Kraken")
 
 
 class KrakenProduct(Product):

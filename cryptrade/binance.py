@@ -1,6 +1,6 @@
 from binance.client import Client as BinClient
 
-from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exceptions import AuthenticationError, ProductError
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
 
 import sys
@@ -28,13 +28,15 @@ class BinTradeClient(TradeClient):
                 "api_secret" in credentials["binance"]:
             api_key = credentials["binance"]["api_key"]
             api_secret = credentials["binance"]["api_secret"]
+            try:
+                self._client = BinClient(api_key, api_secret)
+            except Exception:
+                raise AuthenticationError("invalid Binance API key and/or secret")
         else:
-            raise ParameterError("missing or invalid credentials for Binance")
-
-        try:
-            self._client = BinClient(api_key, api_secret)
-        except Exception:
-            raise AuthenticationError("invalid Binance API key and/or secret")
+            try:
+                self._client = BinClient()
+            except Exception:
+                raise AuthenticationError("Could not create non-authenticated Client for Binance")
 
 
 class BinProduct(Product):

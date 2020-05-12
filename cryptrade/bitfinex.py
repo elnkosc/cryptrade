@@ -3,7 +3,7 @@ import bfxapi.models.notification
 from bfxapi.models.order import OrderType
 
 from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
-from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
+from cryptrade.exceptions import AuthenticationError, ProductError
 
 import sys
 from datetime import datetime
@@ -43,16 +43,21 @@ class BfxTradeClient(TradeClient):
                 "api_secret" in credentials["bitfinex"]:
             api_key = credentials["bitfinex"]["api_key"]
             api_secret = credentials["bitfinex"]["api_secret"]
+            try:
+                # for product information v1 of the API is required, the rest is done on v2
+                self._client = {
+                    "v1": bfxapi.client.BfxRest(api_key, api_secret, host="https://api.bitfinex.com/v1"),
+                    "v2": bfxapi.client.BfxRest(api_key, api_secret, host="https://api.bitfinex.com/v2")}
+            except Exception:
+                raise AuthenticationError("invalid Bitfinex API key and/or secret")
         else:
-            raise ParameterError("missing or invalid credentials for Kraken")
-
-        try:
-            # for product information v1 of the API is required, the rest is done on v2
-            self._client = {
-                "v1": bfxapi.client.BfxRest(api_key, api_secret, host="https://api.bitfinex.com/v1"),
-                "v2": bfxapi.client.BfxRest(api_key, api_secret, host="https://api.bitfinex.com/v2")}
-        except Exception:
-            raise AuthenticationError("invalid Bitfinex API key and/or secret")
+            try:
+                # for product information v1 of the API is required, the rest is done on v2
+                self._client = {
+                    "v1": bfxapi.client.BfxRest(API_KEY=None, API_SECRET=None, host="https://api.bitfinex.com/v1"),
+                    "v2": bfxapi.client.BfxRest(API_KEY=None, API_SECRET=None, host="https://api.bitfinex.com/v2")}
+            except Exception:
+                raise AuthenticationError("Could not create non-authenticated Client for Bitfinex")
 
 
 class BfxProduct(Product):
