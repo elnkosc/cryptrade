@@ -4,11 +4,6 @@ from math import trunc
 from cryptrade.observers import Observable
 
 
-def trunc_dec(number: float, digits: int) -> float:
-    stepper = 10 ** digits
-    return trunc(stepper * number) / stepper
-
-
 class TradeClient:
     def __init__(self) -> None:
         self._client = None
@@ -18,30 +13,68 @@ class TradeClient:
         return self._client
 
 
+class Currency:
+    _currency_map = {}
+
+    def __init__(self, currency_id: str) -> None:
+        self._currency_id = currency_id
+
+    @classmethod
+    def map_from_exchange_currency(cls, currency: str) -> str:
+        results = [key for key, value in cls._currency_map.items() if value == currency]
+        return results[0] if results else currency
+
+    @property
+    def currency_id(self) -> str:
+        return self._currency_id
+
+    @property
+    def exchange_currency_id(self) -> str:
+        return type(self)._currency_map.get(self._currency_id, self._currency_id)
+
+    def __str__(self) -> str:
+        return self._currency_id
+
+    def __eq__(self, other: "Currency") -> bool:
+        return self.currency_id == other.currency_id
+
+
 class Product:
-    def __init__(self, auth_client: TradeClient, trading_currency: str, buying_currency: str) -> None:
+    _product_map = {}
+
+    def __init__(self, auth_client: TradeClient, trading_currency: Currency, buying_currency: Currency) -> None:
         self._auth_client = auth_client
         self._trading_currency = trading_currency
         self._buying_currency = buying_currency
-        self._prod_id = trading_currency + buying_currency
         self._min_order_value = 0.0
         self._min_order_amount = 0.0
         self._min_order_price = 0.0
+        self._order_price_precision = None
 
         if self._buying_currency == self._trading_currency:
             raise AttributeError("Trading and buying currency cannot be the same")
 
-    @property
-    def buying_currency(self) -> str:
-        return self._buying_currency
+    @staticmethod
+    def trunc_dec(number: float, digits: int) -> float:
+        stepper = 10 ** digits
+        return trunc(stepper * number) / stepper
 
-    @property
-    def trading_currency(self) -> str:
-        return self._trading_currency
+    @classmethod
+    def map_from_exchange_product(cls, prod_id: str) -> str:
+        return next(key for key, value in cls._product_map.items() if value == prod_id)
 
     @property
     def prod_id(self) -> str:
-        return self._prod_id
+        prod = str(self._trading_currency) + str(self._buying_currency)
+        return type(self)._product_map.get(prod, prod)
+
+    @property
+    def buying_currency(self) -> Currency:
+        return self._buying_currency
+
+    @property
+    def trading_currency(self) -> Currency:
+        return self._trading_currency
 
     @property
     def min_order_value(self) -> float:
@@ -61,16 +94,13 @@ class Product:
                amount * price >= self._min_order_value
 
     def format_price(self, price: float) -> float:
-        if self._min_order_price > 0:
-            return trunc_dec(price, len(str(self._min_order_price)) - 2)
+        if self._order_price_precision is not None and self._order_price_precision > 0:
+            return type(self).trunc_dec(price / self._order_price_precision, 0) * self._order_price_precision
         else:
             return price
 
     def format_amount(self, amount: float) -> float:
-        if self._min_order_amount > 0:
-            return trunc_dec(amount, len(str(self._min_order_amount)) - 2)
-        else:
-            return amount
+        return type(self).trunc_dec(amount, len(str(self._min_order_amount)) - 2) if self._min_order_amount > 0 else amount
 
     def __str__(self) -> str:
         return f"{self._trading_currency}-{self._buying_currency}"
@@ -261,7 +291,11 @@ class ApiCreator:
         return TradeClient()
 
     @staticmethod
-    def create_product(auth_client: TradeClient, trading_currency: str, buying_currency: str) -> Product:
+    def create_currency(currency_id: str) -> Currency:
+        return Currency(currency_id)
+
+    @staticmethod
+    def create_product(auth_client: TradeClient, trading_currency: Currency, buying_currency: Currency) -> Product:
         return Product(auth_client, trading_currency, buying_currency)
 
     @staticmethod

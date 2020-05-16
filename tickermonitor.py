@@ -21,12 +21,17 @@ client = {}
 product = {}
 ticker = {}
 ticker_log = {}
+trading_currency = {}
+buying_currency = {}
 
 for exchange, api_factory in APIs.items():
     client[exchange] = api_factory.create_trade_client(credentials)
-    product[exchange] = api_factory.create_product(client[exchange], "BTC", "EUR")
+    trading_currency[exchange] = api_factory.create_currency("BTC")
+    buying_currency[exchange] = api_factory.create_currency("EUR")
+    product[exchange] = api_factory.create_product(client[exchange], trading_currency[exchange],
+                                                   buying_currency[exchange])
     ticker[exchange] = api_factory.create_ticker(client[exchange], product[exchange])
-    ticker_log[exchange] = TickerMonitor(ticker[exchange], exchange, 24 * 60 * 60)
+    ticker_log[exchange] = TickerMonitor(ticker[exchange], exchange + " / " + product[exchange].prod_id, 24 * 60 * 60)
 
 
 async def report(interval):

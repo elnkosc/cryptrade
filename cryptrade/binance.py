@@ -1,22 +1,10 @@
 from binance.client import Client as BinClient
 
-from cryptrade.exceptions import AuthenticationError, ProductError, ParameterError
-from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+from cryptrade.exceptions import AuthenticationError, ProductError
+from cryptrade.exchange_api import TradeClient, Currency, Product, Ticker, Order, Account, ApiCreator
 
 import sys
 from datetime import datetime
-
-
-def map_product(trading_currency: str, buying_currency: str) -> str:
-    return trading_currency + buying_currency
-
-
-def map_to_exchange_currency(currency: str) -> str:
-    return currency
-
-
-def map_from_exchange_currency(currency: str) -> str:
-    return currency
 
 
 class BinTradeClient(TradeClient):
@@ -28,29 +16,41 @@ class BinTradeClient(TradeClient):
                 "api_secret" in credentials["binance"]:
             api_key = credentials["binance"]["api_key"]
             api_secret = credentials["binance"]["api_secret"]
+            try:
+                self._client = BinClient(api_key, api_secret)
+            except Exception:
+                raise AuthenticationError("invalid Binance API key and/or secret")
         else:
-            raise ParameterError("missing or invalid credentials for Binance")
+            try:
+                self._client = BinClient()
+            except Exception:
+                raise AuthenticationError("Could not create non-authenticated Client for Binance")
 
-        try:
-            self._client = BinClient(api_key, api_secret)
-        except Exception:
-            raise AuthenticationError("invalid Binance API key and/or secret")
+
+class BinCurrency(Currency):
+    _currency_map = {}
+
+    def __init__(self, currency_id: str) -> None:
+        super().__init__(currency_id)
 
 
 class BinProduct(Product):
-    def __init__(self, auth_client: BinTradeClient, trading_currency: str, buying_currency: str) -> None:
+    _product_map = {}
+
+    def __init__(self, auth_client: BinTradeClient, trading_currency: BinCurrency,
+                 buying_currency: BinCurrency) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = map_product(self._trading_currency, self._buying_currency)
 
-            symbol_info = self._auth_client.client.get_symbol_info(self._prod_id)
+            symbol_info = self._auth_client.client.get_symbol_info(self.prod_id)
             for f in symbol_info["filters"]:
                 if f["filterType"] == "MIN_NOTIONAL":
                     self._min_order_value = float(f["minNotional"])
                 elif f["filterType"] == "PRICE_FILTER":
-                    self._min_price = float(f["minPrice"])
+                    self._min_order_price = float(f["minPrice"])
+                    self._order_price_precision = float(f["tickSize"])
                 elif f["filterType"] == "LOT_SIZE":
-                    self._min_amount = float(f["minQty"])
+                    self._min_order_amount = float(f["minQty"])
 
         except Exception:
             raise ProductError(f"{trading_currency}/{buying_currency} not supported on Binance")
@@ -159,7 +159,7 @@ class BinAccount(Account):
             self._balance.clear()
             if "balances" in account:
                 for balance in account["balances"]:
-                    c = map_from_exchange_currency(balance["asset"].upper())
+                    c = BinCurrency.map_from_exchange_currency(balance["asset"].upper())
                     amount = float(balance["free"]) + float(balance["locked"])
                     if amount > 0:
                         self._balance[c] = amount
@@ -179,7 +179,12 @@ class BinApiCreator(ApiCreator):
         return BinTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client: BinTradeClient, trading_currency: str, buying_currency: str) -> BinProduct:
+    def create_currency(currency_id: str) -> BinCurrency:
+        return BinCurrency(currency_id)
+
+    @staticmethod
+    def create_product(auth_client: BinTradeClient, trading_currency: BinCurrency,
+                       buying_currency: BinCurrency) -> BinProduct:
         return BinProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod

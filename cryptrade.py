@@ -29,7 +29,9 @@ else:
     raise ParameterError("exchange-name unknown or unsupported")
 
 client = api_factory.create_trade_client(credentials)
-product = api_factory.create_product(client, parameters.trading_currency, parameters.buying_currency)
+trading_currency = api_factory.create_currency(parameters.trading_currency)
+buying_currency = api_factory.create_currency(parameters.buying_currency)
+product = api_factory.create_product(client, trading_currency, buying_currency)
 ticker = api_factory.create_ticker(client, product)
 account = api_factory.create_account(client)
 
