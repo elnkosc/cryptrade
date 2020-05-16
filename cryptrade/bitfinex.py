@@ -2,36 +2,12 @@ import bfxapi.client
 import bfxapi.models.notification
 from bfxapi.models.order import OrderType
 
-from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+from cryptrade.exchange_api import TradeClient, Currency, Product, Ticker, Order, Account, ApiCreator
 from cryptrade.exceptions import AuthenticationError, ProductError
 
 import sys
 from datetime import datetime
 import asyncio
-
-
-def map_product(trading_currency: str, buying_currency: str) -> str:
-    return map_to_exchange_currency(trading_currency) + map_to_exchange_currency(buying_currency)
-
-
-def map_to_exchange_currency(currency: str) -> str:
-    if currency == "USDT":
-        c = "UST"
-    elif currency == "TUSD":
-        c = "TSD"
-    else:
-        c = currency
-    return c
-
-
-def map_from_exchange_currency(currency: str) -> str:
-    if currency == "UST":
-        c = "USDT"
-    elif currency == "TSD":
-        c = "TUSD"
-    else:
-        c = currency
-    return c
 
 
 class BfxTradeClient(TradeClient):
@@ -60,19 +36,29 @@ class BfxTradeClient(TradeClient):
                 raise AuthenticationError("Could not create non-authenticated Client for Bitfinex")
 
 
+class BfxCurrency(Currency):
+    _currency_map = {
+        "USDT": "UST",
+        "TUSD": "TSD"}
+
+    def __init__(self, currency_id: str) -> None:
+        super().__init__(currency_id)
+
+
 class BfxProduct(Product):
-    def __init__(self, auth_client: BfxTradeClient, trading_currency: str, buying_currency: str) -> None:
+    def __init__(self, auth_client: BfxTradeClient, trading_currency: BfxCurrency,
+                 buying_currency: BfxCurrency) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = map_product(self._trading_currency, self._buying_currency)
 
             product_list = asyncio.run(self._auth_client.client["v1"].fetch("symbols_details"))
             product_found = False
             for product in product_list:
-                if product["pair"] == self._prod_id.lower():
-                    self._min_amount = float(product["minimum_order_size"])
-                    self._min_price = 0
+                if product["pair"] == self.prod_id.lower():
+                    self._min_order_amount = float(product["minimum_order_size"])
+                    self._min_order_price = 0
                     self._min_order_value = 0
+                    self._order_price_precision = None
                     product_found = True
                     break
 
@@ -83,6 +69,10 @@ class BfxProduct(Product):
             raise
         except Exception:
             raise ProductError(f"{trading_currency}/{buying_currency} not supported on Bitfinex")
+
+    @property
+    def prod_id(self) -> str:
+        return self._trading_currency.exchange_currency_id + self._buying_currency.exchange_currency_id
 
 
 class BfxTicker(Ticker):
@@ -193,7 +183,7 @@ class BfxAccount(Account):
             account_info = await self._auth_client.client["v2"].get_wallets()
             self._balance.clear()
             for wallet in account_info:
-                c = map_from_exchange_currency(wallet.currency.upper())
+                c = BfxCurrency.map_from_exchange_currency(wallet.currency.upper())
                 if wallet.balance > 0:
                     self._balance[c] = wallet.balance
             self._timestamp = datetime.now().replace(microsecond=0)
@@ -221,7 +211,12 @@ class BfxApiCreator(ApiCreator):
         return BfxTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client: BfxTradeClient, trading_currency: str, buying_currency: str) -> BfxProduct:
+    def create_currency(currency_id: str) -> BfxCurrency:
+        return BfxCurrency(currency_id)
+
+    @staticmethod
+    def create_product(auth_client: BfxTradeClient, trading_currency: BfxCurrency,
+                       buying_currency: BfxCurrency) -> BfxProduct:
         return BfxProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod

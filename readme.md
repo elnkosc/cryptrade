@@ -1,6 +1,7 @@
 cryptrade is a project that offers a a high level abstraction of a crypto-currency trade API. It offers classes for:
 * Accounts, holding both fiat currency (EUR, USD, etc) as well as crypto currencies (BTH, ETH, etc)
 * Products, representing what you can actually trade on a crypto exchange, eg. BTC-EUR (buy BTC pay in EUR) or ETH-BTC (buy ETH pay in BTC)
+* Currencies, representing fiat and crypro currencies and their IDs used by exchanges
 * Orders, the actual trade (buying or selling) of crypto currency
 * Tickers, providing 'real-time' info on market-price and bid/ask prices
 
@@ -83,8 +84,9 @@ The cryptrade module contains the following packages:
 * logging (logging interfaces)
 * parameters (interfaces for dealing with -commandline- parameters)
 * exceptions (containing module-specific exceptions)
-* observers (containing base classes for observables and observers as well as the monitroing classes)
+* observers (containing base classes for observables and observers)
 * exchange_api (containing the abstract interface for trading)
+* monitor (containing monitoring classes using asyncio)
 * binance (containing concrete implementation for Binance)
 * bitfinex (containing concrete implementation for Bitfinex)
 * kraken (containing concrete implementation for Kraken)

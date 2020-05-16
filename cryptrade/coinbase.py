@@ -1,22 +1,10 @@
 import cbpro
 
 from cryptrade.exceptions import AuthenticationError, ProductError
-from cryptrade.exchange_api import TradeClient, Product, Ticker, Order, Account, ApiCreator
+from cryptrade.exchange_api import TradeClient, Currency, Product, Ticker, Order, Account, ApiCreator
 
 import sys
 from datetime import datetime
-
-
-def map_product(trading_currency: str, buying_currency: str) -> str:
-    return trading_currency + "-" + buying_currency
-
-
-def map_to_exchange_currency(currency: str) -> str:
-    return currency
-
-
-def map_from_exchange_currency(currency: str) -> str:
-    return currency
 
 
 class CBTradeClient(TradeClient):
@@ -42,22 +30,34 @@ class CBTradeClient(TradeClient):
                 raise AuthenticationError("Could not create non-authenticated Client for Coinbase Pro")
 
 
+class CBCurrency(Currency):
+    _currency_map = {}
+
+    def __init__(self, currency_id: str) -> None:
+        super().__init__(currency_id)
+
+
 class CBProduct(Product):
-    def __init__(self, auth_client: CBTradeClient, trading_currency: str, buying_currency: str) -> None:
+    def __init__(self, auth_client: CBTradeClient, trading_currency: CBCurrency, buying_currency: CBCurrency) -> None:
         try:
             super().__init__(auth_client, trading_currency, buying_currency)
-            self._prod_id = map_product(self._trading_currency, self._buying_currency)
 
             products = self._auth_client.client.get_products()
             for product in products:
-                if product["id"] == self._prod_id:
-                    self._min_amount = float(product["base_min_size"])
-                    self._min_price = float(product["quote_increment"])
+                if product["id"] == self.prod_id:
+                    self._min_order_amount = float(product["base_min_size"])
+                    self._min_order_price = float(product["quote_increment"])
+                    self._order_price_precision = float(product["quote_increment"])
+                    self._min_order_value = self._min_order_amount * self._min_order_price
                     break
-            self._min_order_value = self._min_price
+            self._min_order_value = self._min_order_price
 
         except Exception:
             raise ProductError(f"{trading_currency}/{buying_currency} not supported on Coinbase Pro")
+
+    @property
+    def prod_id(self) -> str:
+        return str(self._trading_currency) + "-" + str(self._buying_currency)
 
 
 class CBTicker(Ticker):
@@ -159,7 +159,7 @@ class CBAccount(Account):
         try:
             self._balance.clear()
             for sub_account in self._auth_client.client.get_accounts():
-                c = map_from_exchange_currency(sub_account["currency"].upper())
+                c = CBCurrency.map_from_exchange_currency(sub_account["currency"].upper())
                 if float(sub_account["balance"]) > 0:
                     self._balance[c] = float(sub_account["balance"])
             self._timestamp = datetime.now().replace(microsecond=0)
@@ -178,7 +178,12 @@ class CBApiCreator(ApiCreator):
         return CBTradeClient(credentials)
 
     @staticmethod
-    def create_product(auth_client: CBTradeClient, trading_currency: str, buying_currency: str) -> CBProduct:
+    def create_currency(currency_id: str) -> CBCurrency:
+        return CBCurrency(currency_id)
+
+    @staticmethod
+    def create_product(auth_client: CBTradeClient, trading_currency: CBCurrency,
+                       buying_currency: CBCurrency) -> CBProduct:
         return CBProduct(auth_client, trading_currency, buying_currency)
 
     @staticmethod
