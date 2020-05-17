@@ -51,6 +51,7 @@ class BinProduct(Product):
                     self._order_price_precision = float(f["tickSize"])
                 elif f["filterType"] == "LOT_SIZE":
                     self._min_order_amount = float(f["minQty"])
+                    self._order_amount_precision = float(f["stepSize"])
 
         except Exception:
             raise ProductError(f"{trading_currency}/{buying_currency} not supported on Binance")

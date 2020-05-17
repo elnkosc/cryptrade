@@ -151,6 +151,7 @@ class KrakenProduct(Product):
                     self._min_order_price = 1 / 10 ** v["pair_decimals"]
                     self._min_order_value = self._min_order_amount * self._min_order_price
                     self._order_price_precision = 1 / 10 ** v["pair_decimals"]
+                    self._order_amount_precision = 1 / 10 ** v["lot_decimals"]
             else:
                 raise ProductError(product["error"][0])
 

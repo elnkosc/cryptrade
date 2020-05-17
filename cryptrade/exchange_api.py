@@ -50,6 +50,7 @@ class Product:
         self._min_order_amount = 0.0
         self._min_order_price = 0.0
         self._order_price_precision = None
+        self._order_amount_precision = None
 
         if self._buying_currency == self._trading_currency:
             raise AttributeError("Trading and buying currency cannot be the same")
@@ -100,7 +101,10 @@ class Product:
             return price
 
     def format_amount(self, amount: float) -> float:
-        return type(self).trunc_dec(amount, len(str(self._min_order_amount)) - 2) if self._min_order_amount > 0 else amount
+        if self._order_amount_precision is not None and self._order_amount_precision > 0:
+            return type(self).trunc_dec(amount / self._order_amount_precision, 0) * self._order_amount_precision
+        else:
+            return amount
 
     def __str__(self) -> str:
         return f"{self._trading_currency}-{self._buying_currency}"

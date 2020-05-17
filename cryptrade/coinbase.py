@@ -48,6 +48,7 @@ class CBProduct(Product):
                     self._min_order_amount = float(product["base_min_size"])
                     self._min_order_price = float(product["quote_increment"])
                     self._order_price_precision = float(product["quote_increment"])
+                    self._order_amount_precision = float(product["base_increment"])
                     self._min_order_value = self._min_order_amount * self._min_order_price
                     break
             self._min_order_value = self._min_order_price
