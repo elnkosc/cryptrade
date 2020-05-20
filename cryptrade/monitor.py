@@ -152,6 +152,6 @@ class Transactions:
     def __str__(self) -> str:
         return (f"TRANSACTIONS {self._name}\n"
                 f"Number  : {self._number:4d}\n"
-                f"Amount  : {self._amount:4.4f}\n"
+                f"Amount  : {self._amount:6.4f}\n"
                 f"Value   : {self._value:6.2f}\n"
                 f"Fee     : {self._total_fee:6.2f}\n")
