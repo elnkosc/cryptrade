@@ -9,7 +9,7 @@ else:
         long_description = f.read()
 setup(
     name='cryptrade',
-    version='1.1',
+    version='1.102',
     packages=['cryptrade'],
     url='https://github.com/elnkosc/cryptrade/',
     license='GNU General Public License v3.0',
