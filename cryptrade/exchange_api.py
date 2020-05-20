@@ -50,6 +50,7 @@ class Product:
         self._min_order_amount = 0.0
         self._min_order_price = 0.0
         self._order_price_precision = None
+        self._order_amount_precision = None
 
         if self._buying_currency == self._trading_currency:
             raise AttributeError("Trading and buying currency cannot be the same")
@@ -58,6 +59,10 @@ class Product:
     def trunc_dec(number: float, digits: int) -> float:
         stepper = 10 ** digits
         return trunc(stepper * number) / stepper
+
+    @staticmethod
+    def apply_precision(number: float, precision: float) -> float:
+        return Product.trunc_dec(number // precision * precision, len(str(precision)) - 2)
 
     @classmethod
     def map_from_exchange_product(cls, prod_id: str) -> str:
@@ -95,12 +100,15 @@ class Product:
 
     def format_price(self, price: float) -> float:
         if self._order_price_precision is not None and self._order_price_precision > 0:
-            return type(self).trunc_dec(price / self._order_price_precision, 0) * self._order_price_precision
+            return type(self).apply_precision(price, self._order_price_precision)
         else:
             return price
 
     def format_amount(self, amount: float) -> float:
-        return type(self).trunc_dec(amount, len(str(self._min_order_amount)) - 2) if self._min_order_amount > 0 else amount
+        if self._order_amount_precision is not None and self._order_amount_precision > 0:
+            return type(self).apply_precision(amount, self._order_amount_precision)
+        else:
+            return amount
 
     def __str__(self) -> str:
         return f"{self._trading_currency}-{self._buying_currency}"
@@ -253,7 +261,7 @@ class Account(Observable):
     def balance_string(self) -> str:
         s = ""
         for currency, balance in self._balance.items():
-            s += f"{currency} : {balance:8.4f}\n"
+            s += f"{currency}    : {balance:8.4f}\n"
         return s
 
     def update(self) -> None:

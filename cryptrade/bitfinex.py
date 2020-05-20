@@ -59,6 +59,7 @@ class BfxProduct(Product):
                     self._min_order_price = 0
                     self._min_order_value = 0
                     self._order_price_precision = None
+                    self._order_amount_precision = None
                     product_found = True
                     break
 

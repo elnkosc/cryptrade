@@ -1,3 +1,5 @@
+Writing your own crypto-trade bot is easy now!
+
 cryptrade is a project that offers a a high level abstraction of a crypto-currency trade API. It offers classes for:
 * Accounts, holding both fiat currency (EUR, USD, etc) as well as crypto currencies (BTH, ETH, etc)
 * Products, representing what you can actually trade on a crypto exchange, eg. BTC-EUR (buy BTC pay in EUR) or ETH-BTC (buy ETH pay in BTC)
