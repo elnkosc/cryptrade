@@ -2,10 +2,10 @@ from setuptools import setup
 import sys
 
 if sys.version_info[0] < 3:
-    with open('README.md') as f:
+    with open('readme.md') as f:
         long_description = f.read()
 else:
-    with open('README.md', encoding='utf-8') as f:
+    with open('readme.md', encoding='utf-8') as f:
         long_description = f.read()
 setup(
     name='cryptrade',
