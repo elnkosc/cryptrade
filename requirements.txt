@@ -3,7 +3,7 @@ astroid==2.4.1
 async-timeout==3.0.1
 asyncio==3.4.3
 attrs==19.3.0
-autobahn==20.3.1
+autobahn==20.12.3
 Automat==20.2.0
 binance==0.3
 bitfinex-api-py==1.1.6
