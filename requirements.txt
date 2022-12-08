@@ -8,7 +8,7 @@ Automat==20.2.0
 binance==0.3
 bitfinex-api-py==1.1.6
 cbpro==1.1.4
-certifi==2019.11.28
+certifi==2022.12.7
 cffi==1.14.0
 chardet==3.0.4
 colorama==0.4.3
